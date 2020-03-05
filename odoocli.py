@@ -1,5 +1,5 @@
 #!/usr/bin/python3
-
+import getpass
 import argparse
 import calendar
 import codecs
@@ -10,6 +10,7 @@ import time
 import xmlrpc.client
 from configparser import ConfigParser
 from datetime import datetime, date, timedelta
+from dotenv import load_dotenv
 
 config_file = [os.path.dirname(os.path.realpath(__file__)) + '/odoocli.conf']
 
@@ -386,6 +387,8 @@ def get_user_id(login):
 # Main
 #
 ########################################################################
+
+load_dotenv()
 
 config_parser = ConfigParser()
 config_parser.read(config_file)
