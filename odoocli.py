@@ -18,7 +18,7 @@ help_text = """
 Muestra un resumen de la jornada laboral registrada en Odoo hasta el momento,
 indicando los días y horas laborables totales del mes, las horas laborables
 hasta el día actual y las horas trabajadas hasta el momento (incluídas las
-correspondientes a la sesión actual, si es que hay una abierta por el usaurio).
+correspondientes a la sesión actual, si es que hay una abierta por el usuario).
 """
 epilog_text = """
 Si se indica un mes concreto con la opción --month, se mostrará el resumen
@@ -31,7 +31,7 @@ Con --file NOMBRE_DE ARCHIVO se guarará el listado de asistencias en un archivo
 en formato CSV.
 
 Si existen las variables de entorno "ODOOCLIUSER" y "ODOOCLIPASS", se usarán
-para el login en Odoo a menos que se indique un usaurio con el argumento
+para el login en Odoo a menos que se indique un usuario con el argumento
 --user.
 
 Si existe la variable "ODOOCLIUSER" pero no "ODOOCLIPASS", el programa tomará
@@ -186,7 +186,7 @@ def get_vacances_by_month(login, month=None, year=None):
                     [[]],
                     {})
     for i in vacances:
-        if i['employee_id'][0] == user_id:
+        if i['employee_id'] and i['employee_id'][0] == user_id:
             if i['date_from'] and i['date_to'] and i['state'] != 'refuse':
                 d_init = str_to_localtime(i['date_from'])
                 d_end = str_to_localtime(i['date_to'])
@@ -236,6 +236,7 @@ def get_user_attendance_by_month(login, month=None, year=None):
                     'search_read',
                     [[('employee_id', '=', user_id), ('check_in', '=like', date_filter)]],
                     {'fields': ['employee_id', 'check_in', 'check_out', 'worked_hours']})
+
     for e in attendance:
         yield (e['check_in'], e['check_out'], e['worked_hours'])
 
@@ -367,7 +368,7 @@ def mes(month):
 
 def get_user_id(login):
     """
-    Retorna el id en hr.employee del usaurio logeado.
+    Retorna el id en hr.employee del usuario logeado.
     Es un poco ñapa mientras vemos cómo filtrar la query
     """
     users = login['conn'].execute_kw(login['db'],
@@ -380,6 +381,7 @@ def get_user_id(login):
     for user in users:
         if user['user_id'][0] == login['uid']:
             return user['id']
+
 
 
 ########################################################################
@@ -404,7 +406,7 @@ parser = argparse.ArgumentParser(
                         description=help_text,
                         epilog=epilog_text)
 parser.add_argument('-u', '--user', type=str, dest='user',
-                    help='Nombre de usaurio.\nSi no se aporta se utilizará el \
+                    help='Nombre de usuario.\nSi no se aporta se utilizará el \
                          contenido en la variable de entorno "ODOOCLIUSER"')
 parser.add_argument('-m', '--month', type=int, dest='month',
                     help='Número en el rango [1-12] indicando el mes del que \
@@ -418,7 +420,7 @@ parser.add_argument('-f', '--file', type=str,
                          formato CSV\nEste argumento hace que se ignore la \
                          opción --list')
 parser.add_argument('-l', '--list', action='count',
-                    help='Muestra una lista de asistencias en logar del \
+                    help='Muestra una lista de asistencias en lugar del \
                          resumen')
 args = parser.parse_args()
 
