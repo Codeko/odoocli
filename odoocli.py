@@ -1,9 +1,9 @@
 #!/usr/bin/python3
-import getpass
 import argparse
 import calendar
 import codecs
 import csv
+import getpass
 import os
 import sys
 import time
@@ -424,16 +424,16 @@ args = parser.parse_args()
 
 if args.user:
     username = args.user
-    password = input('password: ')
+    password = getpass.getpass()
 elif os.environ.get('ODOOCLIUSER') and not os.environ.get('ODOOCLIPASS'):
     username = os.environ['ODOOCLIUSER']
-    password = input('password: ')
+    password = getpass.getpass()
 elif os.environ.get('ODOOCLIUSER') and os.environ.get('ODOOCLIPASS'):
     username = os.environ['ODOOCLIUSER']
     password = os.environ['ODOOCLIPASS']
 else:
-    username = input('username: ')
-    password = input('password: ')
+    username = input('Username: ')
+    password = getpass.getpass()
 
 common = xmlrpc.client.ServerProxy('{}/xmlrpc/2/common'.format(server))
 uid = common.authenticate(db, username, password, {})
