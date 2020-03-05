@@ -455,7 +455,7 @@ if args.file:
         else:
             list_to_csv(login, args.file, args.month)
     else:
-        llist_to_csv(login, args.file)
+        list_to_csv(login, args.file)
 elif args.list:
     if args.month:
         if args.year:
