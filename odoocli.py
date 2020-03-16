@@ -10,6 +10,8 @@ import time
 import xmlrpc.client
 from configparser import ConfigParser
 from datetime import datetime, date, timedelta
+from pathlib import Path
+
 from dotenv import load_dotenv
 
 labor_hours_by_day = 7.0
@@ -41,7 +43,11 @@ def show_resume(login, month=None, year=None):
 
 
 def list_to_csv(login, filename, month=None, year=None):
-    with codecs.open(filename, 'w', 'utf-8') as out:
+    file_path = Path(filename)
+    if 'user_email' in login:
+        user_name = login['user_email'].split('@')[0]
+        file_path = Path(file_path.parents[0], user_name + '-' + file_path.name)
+    with codecs.open(file_path, 'w', 'utf-8') as out:
         csv_writer = csv.writer(out, delimiter=',', quotechar='"')
         csv_writer.writerow(('entrada', 'salida', 'horas'))
         for line in get_user_attendance_by_month(login, month, year):
