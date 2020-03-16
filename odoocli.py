@@ -389,13 +389,13 @@ def get_mail_users(login):
         yield user['email']
 
 
-def bulk(login, function):
+def bulk(login, function, *argus):
     for user in get_mail_users(login):
-        new_login_data = login_data
+        new_login_data = dict(login)
         new_login_data['user_email'] = user
         if count_worked_hours(new_login_data):
             print('Procesando', user)
-            function(new_login_data)
+            function(new_login_data, *argus)
         else:
             print('Se omite', user)
 
