@@ -41,7 +41,9 @@ epilog_text = """
     resumen.
 
     Con --file NOMBRE_DE ARCHIVO se guarará el listado de asistencias en un archivo
-    en formato CSV.
+    en formato CSV por cada usuario. El nombre de cada uno de los archivos generados
+    será "usuario-NOMBRE_DE ARCHIVO", donde "usuario" es el nombre extraído del
+    correo electrónico de cada usaurio. 
 
     Si existen las variables de entorno "ODOOCLIUSER" y "ODOOCLIPASS", se usarán
     para el login en Odoo a menos que se indique un usuario con el argumento
