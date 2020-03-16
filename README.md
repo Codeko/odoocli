@@ -48,5 +48,16 @@ Si se usa el argumento --user el programa ignorará las variables de entorno y
 mostrará un prompt solicitando la contraseña.
 
 
+## odooclibulk.py
 
+```
+odooclibulk.py [-h] [-u USER] [-m MONTH] [-y YEAR] [-f FILE] [-l]
+```
 
+Este scrip funciona igual que odoocli.py, pero genera una serie de informes de
+todos los usuarios activos, en lugar de sólo un usuario.
+
+Si se usa la opción `[-f FILE]`, se crearán tantos archivos como usuarios activos
+haya, con nombres del tipo user-FILE, donde "FILE" es el nombre pasado como argumento
+y "user" es el nombre extraído del correo elecrónico del usuario
+(la parte de delante de la arroba) 
