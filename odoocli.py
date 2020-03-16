@@ -43,6 +43,7 @@ solicitando el nombre de usuario y la contraseña.
 Si se usa el argumento --user el programa ignorará las variables de entorno y
 mostrará un prompt solicitando la contraseña.
 """
+labor_hours_by_day = 7.0
 
 
 def show_resume_now(login):
@@ -75,15 +76,14 @@ def list_to_csv(login, filename, month=None, year=None):
         csv_writer = csv.writer(out, delimiter=',', quotechar='"')
         csv_writer.writerow(('entrada', 'salida', 'horas'))
         for line in get_user_attendance_by_month(login, month, year):
-
-            entry = tlocal(line[0], 'DT')
-            exit = tlocal(line[1], 'DT')
+            tentry = tlocal(line[0], 'DT')
+            texit = tlocal(line[1], 'DT')
             if line[1]:
                 hours = line[2]
             else:
                 hours = open_session_worked_hours(login)
 
-            csv_writer.writerow((entry, exit, hours))
+            csv_writer.writerow((tentry, texit, hours))
 
 
 def list_to_screen(login, month=None, year=None):
@@ -108,6 +108,7 @@ def list_to_screen(login, month=None, year=None):
 # Holidays, weekends and vancances
 #
 ########################################################################
+
 
 def public_holidays(login, year):
     """
@@ -147,7 +148,7 @@ def holidays_by_month(login, month=None, year=None):
         month = int(datetime.now().month)
     for day in public_holidays(login, year):
         if int(day['date'].split('-')[1]) == month:
-            yield (day['date'])
+            yield day['date']
 
 
 def weekend_days_by_month(month=None, year=None):
@@ -194,8 +195,8 @@ def get_vacances_by_month(login, month=None, year=None):
                     sdate = date(*d_init[:3])
                     edate = date(*d_end[:3])
                     delta = edate - sdate
-                    for i in range(delta.days + 1):
-                        day = sdate + timedelta(days=i)
+                    for inc in range(delta.days + 1):
+                        day = sdate + timedelta(days=inc)
                         if day.year == year and day.month == month:
                             yield "{}-{:02d}-{:02d}".format(day.year,
                                                             day.month,
@@ -238,7 +239,7 @@ def get_user_attendance_by_month(login, month=None, year=None):
                     {'fields': ['employee_id', 'check_in', 'check_out', 'worked_hours']})
 
     for e in attendance:
-        yield (e['check_in'], e['check_out'], e['worked_hours'])
+        yield e['check_in'], e['check_out'], e['worked_hours']
 
 
 def count_labour_days(login, month=None, year=None):
@@ -270,7 +271,6 @@ def labor_hours_until_today(login):
     """
     Horas laborables transcurridas hasta hoy
     """
-    labor_hours_by_day = 7.0
     return labor_hours_by_day * count_labour_days_until_today(login)
 
 
@@ -278,7 +278,6 @@ def total_labor_hours(login, month=None, year=None):
     """
     Horas laborables totales de un mes
     """
-    labor_hours_by_day = 7.0
     return labor_hours_by_day * count_labour_days(login, month, year)
 
 
@@ -318,7 +317,7 @@ def open_session_worked_hours(login):
 #
 ########################################################################
 
-def txt_date(datetime, mode='DT'):
+def txt_date(idatetime, mode='DT'):
     if mode == 'T':
         date_format = "%H:%M:%S"
     elif mode == 'D':
@@ -327,7 +326,7 @@ def txt_date(datetime, mode='DT'):
         date_format = "%Y-%m-%d %H:%M:%S"
 
     try:
-        txt = time.strftime(date_format, datetime)
+        txt = time.strftime(date_format, idatetime)
     except TypeError:
         txt = '--------'
     return txt
@@ -338,10 +337,9 @@ def str_to_localtime(datetime_str):
         time_tuple = time.strptime(datetime_str, "%Y-%m-%d %H:%M:%S")
         gm = calendar.timegm(time_tuple)
     except TypeError:
-        date = False
+        return False
     else:
         return time.localtime(gm)
-    return date
 
 
 def tlocal(datetime_str, mode='DT'):
@@ -371,6 +369,9 @@ def get_user_id(login):
     Retorna el id en hr.employee del usuario logeado.
     Es un poco ñapa mientras vemos cómo filtrar la query
     """
+    user_to_find = get_user_by_email(login) if 'user_email' in login else login['uid']
+    if not user_to_find:
+        sys.exit('El usaurio no existe')
     users = login['conn'].execute_kw(login['db'],
                                      login['uid'],
                                      login['password'],
@@ -379,9 +380,26 @@ def get_user_id(login):
                                      [],
                                      {'fields': ['user_id', 'id']})
     for user in users:
-        if user['user_id'][0] == login['uid']:
+        if user['user_id'][0] == user_to_find:
             return user['id']
 
+
+def get_user_by_email(login):
+    """
+    Retorna el id del usaurio (en res.user)
+    a partir del email contenido en el campo 'user_email' de login (si lo hay).
+    """
+    if 'user_email' in login:
+        users = login['conn'].execute_kw(login['db'],
+                                         login['uid'],
+                                         login['password'],
+                                         'res.users',
+                                         'search_read',
+                                         [[('email', '=', login['user_email'])]],
+                                         {'fields': ['email']})
+        for user in users:
+            return user['id']
+    return None
 
 
 ########################################################################
@@ -422,6 +440,8 @@ parser.add_argument('-f', '--file', type=str,
 parser.add_argument('-l', '--list', action='count',
                     help='Muestra una lista de asistencias en lugar del \
                          resumen')
+parser.add_argument('-e', '--email', type=str, dest='email',
+                    help='eMail del usuario del que se generará el informe')
 args = parser.parse_args()
 
 if args.user:
@@ -441,12 +461,10 @@ common = xmlrpc.client.ServerProxy('{}/xmlrpc/2/common'.format(server))
 uid = common.authenticate(db, username, password, {})
 
 if uid:
-    login = {}
-    login['db'] = db
-    login['password'] = password
-    login['username'] = username
-    login['uid'] = uid
-    login['conn'] = xmlrpc.client.ServerProxy('{}/xmlrpc/2/object'.format(server))
+    login_data = {'db': db, 'password': password, 'username': username, 'uid': uid,
+                  'conn': xmlrpc.client.ServerProxy('{}/xmlrpc/2/object'.format(server))}
+    if args.email:
+        login_data['user_email'] = args.email
 else:
     sys.exit('Error en el Login')
 
@@ -456,24 +474,24 @@ if args.month and (args.month < 1 or args.month > 12):
 if args.file:
     if args.month:
         if args.year:
-            list_to_csv(login, args.file, args.month, args.year)
+            list_to_csv(login_data, args.file, args.month, args.year)
         else:
-            list_to_csv(login, args.file, args.month)
+            list_to_csv(login_data, args.file, args.month)
     else:
-        list_to_csv(login, args.file)
+        list_to_csv(login_data, args.file)
 elif args.list:
     if args.month:
         if args.year:
-            list_to_screen(login, args.month, args.year)
+            list_to_screen(login_data, args.month, args.year)
         else:
-            list_to_screen(login, args.month)
+            list_to_screen(login_data, args.month)
     else:
-        list_to_screen(login)
+        list_to_screen(login_data)
 else:
     if args.month:
         if args.year:
-            show_resume(login, args.month, args.year)
+            show_resume(login_data, args.month, args.year)
         else:
-            show_resume(login, args.month)
+            show_resume(login_data, args.month)
     else:
-        show_resume_now(login)
+        show_resume_now(login_data)
