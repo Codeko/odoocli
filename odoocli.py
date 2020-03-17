@@ -4,6 +4,7 @@ import calendar
 import codecs
 import csv
 import getpass
+import io
 import os
 import sys
 import time
@@ -11,6 +12,12 @@ import xmlrpc.client
 from configparser import ConfigParser
 from datetime import datetime, date, timedelta
 from pathlib import Path
+import smtplib
+from email.mime.multipart import MIMEMultipart
+from email.mime.base import MIMEBase
+from email.mime.text import MIMEText
+from email.utils import formatdate
+from email import encoders
 
 from dotenv import load_dotenv
 
@@ -42,11 +49,28 @@ def show_resume(login, month=None, year=None):
     print('Horas trabajadas: ', count_worked_hours(login, month, year))
 
 
+def resume_to_string(login, month=None, year=None):
+    """
+    Informe del mes pasado como argumento:
+    """
+    if year is None:
+        year = int(datetime.now().year)
+    if month is None:
+        month = int(datetime.now().month)
+
+    response = "{} {}\n".format(mes(month), year)
+    response += "Días laborables : {}\n".format(count_labour_days(login, month, year))
+    response += "Horas laborables: {}\n".format(total_labor_hours(login, month, year))
+    response += "Horas trabajadas: {}\n".format(count_worked_hours(login, month, year))
+    return response
+
+
 def list_to_csv(login, filename, month=None, year=None):
     file_path = Path(filename)
     if 'user_email' in login:
         user_name = login['user_email'].split('@')[0]
-        file_path = Path(file_path.parents[0], user_name + '-' + file_path.name)
+        file_path = Path(file_path.parents[0],
+                         user_name + '-' + file_path.name)
     with codecs.open(file_path, 'w', 'utf-8') as out:
         csv_writer = csv.writer(out, delimiter=',', quotechar='"')
         csv_writer.writerow(('entrada', 'salida', 'horas'))
@@ -59,6 +83,55 @@ def list_to_csv(login, filename, month=None, year=None):
                 hours = open_session_worked_hours(login)
 
             csv_writer.writerow((tentry, texit, hours))
+
+
+def list_to_csv_string(login, month=None, year=None):
+    mem_file = io.StringIO()
+    csv_writer = csv.writer(mem_file, delimiter=',', quotechar='"')
+    csv_writer.writerow(('entrada', 'salida', 'horas'))
+    for line in get_user_attendance_by_month(login, month, year):
+        tentry = tlocal(line[0], 'DT')
+        texit = tlocal(line[1], 'DT')
+        if line[1]:
+            hours = line[2]
+        else:
+            hours = open_session_worked_hours(login)
+        csv_writer.writerow((tentry, texit, hours))
+    return mem_file.getvalue()
+
+
+def filename(login, path):
+    file_path = Path(path)
+    if 'user_email' in login:
+        user_name = login['user_email'].split('@')[0]
+        file_path = Path(file_path.parents[0],
+                         user_name + '-' + file_path.name)
+    return file_path
+
+
+def mail_report(login, month=None, year=None):
+    """
+    OJO: Este caso es especial porque, por defecto,
+    no manda el informe del mes corriente, sino el del mes pasado
+    """
+    if year is None:
+        year = int(datetime.now().year)
+    if month is None:
+        month = int(datetime.now().month) - 1
+    if month == 0:
+        month = 12
+        year -= 1
+
+    if 'user_email' in login:
+        mail_to = login['user_email']
+    else:
+        mail_to = tuple(get_mail_users(login, login['uid']))[0]
+    name = "asistencia{}-{}.csv".format(year, month)
+    file_name = filename(login, name)
+    file_content = list_to_csv_string(login, month, year)
+    body_text = resume_to_string(login, month, year)
+    subject = "Informe asistencia {} {}".format(mes(month), year)
+    send_mail(mail_to, subject, body_text, file_name, file_content)
 
 
 def list_to_screen(login, month=None, year=None):
@@ -211,8 +284,10 @@ def get_user_attendance_by_month(login, month=None, year=None):
             login['password'],
             'hr.attendance',
             'search_read',
-            [[('employee_id', '=', user_id), ('check_in', '=like', date_filter)]],
-            {'fields': ['employee_id', 'check_in', 'check_out', 'worked_hours']})
+            [[('employee_id', '=', user_id),
+              ('check_in', '=like', date_filter)]],
+            {'fields': ['employee_id', 'check_in', 'check_out',
+                        'worked_hours']})
     except TypeError:
         return None
     else:
@@ -228,7 +303,8 @@ def count_labour_days(login, month=None, year=None):
         year = int(datetime.now().year)
     if month is None:
         month = int(datetime.now().month)
-    return calendar.monthrange(year, month)[1] - len(list(not_working_by_month(login, month, year)))
+    return calendar.monthrange(year, month)[1] - len(
+        list(not_working_by_month(login, month, year)))
 
 
 def count_labour_days_until_today(login):
@@ -347,7 +423,8 @@ def get_user_id(login):
     Retorna el id en hr.employee del usuario logeado.
     Es un poco ñapa mientras vemos cómo filtrar la query
     """
-    user_to_find = get_user_by_email(login) if 'user_email' in login else login['uid']
+    user_to_find = get_user_by_email(login) if 'user_email' in login else \
+    login['uid']
     if not user_to_find:
         sys.exit('El usaurio no existe')
     users = login['conn'].execute_kw(login['db'],
@@ -373,26 +450,70 @@ def get_user_by_email(login):
                                          login['password'],
                                          'res.users',
                                          'search_read',
-                                         [[('email', '=', login['user_email'])]],
+                                         [[('email', '=',
+                                            login['user_email'])]],
                                          {'fields': ['email']})
         for user in users:
             return user['id']
     return None
 
 
-def get_mail_users(login):
+def get_mail_users(login, user_id=None):
     """
     Retorna los emails de todos los usuarios
+    o el de la ID que se le pase
     """
-    users = login['conn'].execute_kw(login['db'],
-                                     login['uid'],
-                                     login['password'],
-                                     'res.users',
-                                     'search_read',
-                                     [],
-                                     {'fields': ['email']})
+    if user_id:
+        users = login['conn'].execute_kw(login['db'],
+                                         login['uid'],
+                                         login['password'],
+                                         'res.users',
+                                         'search_read',
+                                         [[('id', '=',
+                                            user_id)]],
+                                         {'fields': ['email']})
+    else:
+        users = login['conn'].execute_kw(login['db'],
+                                         login['uid'],
+                                         login['password'],
+                                         'res.users',
+                                         'search_read',
+                                         [],
+                                         {'fields': ['email']})
     for user in users:
         yield user['email']
+
+
+def send_mail(mail_to, subject, message, file_name, file_data):
+
+    mail_server = os.environ.get('ODOOCLI_MAIL_SERVER')
+    mail_port = os.environ.get('ODOOCLI_MAIL_PORT')
+    mail_tls = os.environ.get('ODOOCLI_MAIL_TLS')
+    mail_from = os.environ.get('ODOOCLI_MAIL_FROM')
+    mail_user = os.environ.get('ODOOCLI_MAIL_USER')
+    mail_password = os.environ.get('ODOOCLI_MAIL_PASSWORD')
+
+    msg = MIMEMultipart()
+    msg['From'] = mail_from
+    msg['To'] = mail_to
+    msg['Date'] = formatdate(localtime=True)
+    msg['Subject'] = subject
+
+    msg.attach(MIMEText(message))
+
+    part = MIMEBase('application', "octet-stream")
+    part.set_payload(file_data)
+    encoders.encode_base64(part)
+    part.add_header('Content-Disposition',
+                    'attachment; filename="{}"'.format(file_name))
+    msg.attach(part)
+
+    smtp = smtplib.SMTP(mail_server, mail_port)
+    if mail_tls:
+        smtp.starttls()
+    smtp.login(mail_user, mail_password)
+    smtp.sendmail(mail_from, [mail_to], msg.as_string())
+    smtp.quit()
 
 
 def bulk(login, function, *argus):
@@ -414,7 +535,8 @@ def bulk(login, function, *argus):
 
 if __name__ == '__main__':
 
-    config_file = [os.path.dirname(os.path.realpath(__file__)) + '/odoocli.conf']
+    config_file = [
+        os.path.dirname(os.path.realpath(__file__)) + '/odoocli.conf']
 
     help_text = """
     Muestra un resumen de la jornada laboral registrada en Odoo hasta el momento,
@@ -499,8 +621,10 @@ if __name__ == '__main__':
     uid = common.authenticate(db, username, password, {})
 
     if uid:
-        login_data = {'db': db, 'password': password, 'username': username, 'uid': uid,
-                      'conn': xmlrpc.client.ServerProxy('{}/xmlrpc/2/object'.format(server))}
+        login_data = {'db': db, 'password': password, 'username': username,
+                      'uid': uid,
+                      'conn': xmlrpc.client.ServerProxy(
+                          '{}/xmlrpc/2/object'.format(server))}
         if args.email:
             login_data['user_email'] = args.email
     else:
