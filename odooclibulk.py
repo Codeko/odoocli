@@ -80,6 +80,9 @@ parser.add_argument('-f', '--file', type=str,
 parser.add_argument('-l', '--list', action='count',
                     help='Muestra una lista de asistencias en lugar del \
                          resumen')
+parser.add_argument('-r', '--report', action='count',
+                    help='Envía informes por email')
+
 args = parser.parse_args()
 
 if args.user:
@@ -99,8 +102,10 @@ common = xmlrpc.client.ServerProxy('{}/xmlrpc/2/common'.format(server))
 uid = common.authenticate(db, username, password, {})
 
 if uid:
-    login_data = {'db': db, 'password': password, 'username': username, 'uid': uid,
-                  'conn': xmlrpc.client.ServerProxy('{}/xmlrpc/2/object'.format(server))}
+    login_data = {'db': db, 'password': password, 'username': username,
+                  'uid': uid,
+                  'conn': xmlrpc.client.ServerProxy(
+                      '{}/xmlrpc/2/object'.format(server))}
 else:
     sys.exit('Error en el Login')
 
@@ -109,15 +114,27 @@ if args.month and (args.month < 1 or args.month > 12):
 if args.file:
     if args.month:
         if args.year:
-            odoocli.bulk(login_data, odoocli.list_to_csv, args.file, args.month, args.year)
+            odoocli.bulk(login_data, odoocli.list_to_csv, args.file,
+                         args.month, args.year)
         else:
-            odoocli.bulk(login_data, odoocli.list_to_csv, args.file, args.month)
+            odoocli.bulk(login_data, odoocli.list_to_csv, args.file,
+                         args.month)
     else:
         odoocli.bulk(login_data, odoocli.list_to_csv, args.file)
+elif args.report:
+    if args.month:
+        if args.year:
+            odoocli.bulk(login_data, odoocli.mail_report, args.month,
+                         args.year)
+        else:
+            odoocli.bulk(login_data, odoocli.mail_report, args.month)
+    else:
+        odoocli.bulk(login_data, odoocli.mail_report)
 elif args.list:
     if args.month:
         if args.year:
-            odoocli.bulk(login_data, odoocli.list_to_screen, args.month, args.year)
+            odoocli.bulk(login_data, odoocli.list_to_screen, args.month,
+                         args.year)
         else:
             odoocli.bulk(login_data, odoocli.list_to_screen, args.month)
     else:
@@ -125,7 +142,8 @@ elif args.list:
 else:
     if args.month:
         if args.year:
-            odoocli.bulk(login_data, odoocli.show_resume, args.month, args.year)
+            odoocli.bulk(login_data, odoocli.show_resume, args.month,
+                         args.year)
         else:
             odoocli.bulk(login_data, odoocli.show_resume, args.month)
     else:

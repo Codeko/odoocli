@@ -52,7 +52,7 @@ def resume_to_string(login, month=None, year=None):
         month = int(datetime.now().month)
 
     response = "{} {}\n".format(mes(month), year)
-    response += "Días laborables : {}\n".format(
+    response += "Días laborables: {}\n".format(
         count_labour_days(login, month, year))
     response += "Horas laborables: {}\n".format(
         total_labor_hours(login, month, year))
