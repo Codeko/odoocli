@@ -1,4 +1,5 @@
 #!/usr/bin/python3
+
 import argparse
 import calendar
 import codecs
@@ -6,18 +7,18 @@ import csv
 import getpass
 import io
 import os
+import smtplib
 import sys
 import time
 import xmlrpc.client
 from configparser import ConfigParser
 from datetime import datetime, date, timedelta
-from pathlib import Path
-import smtplib
-from email.mime.multipart import MIMEMultipart
+from email import encoders
 from email.mime.base import MIMEBase
+from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.utils import formatdate
-from email import encoders
+from pathlib import Path
 
 from dotenv import load_dotenv
 
@@ -38,15 +39,7 @@ def show_resume(login, month=None, year=None):
     """
     Informe del mes pasado como argumento:
     """
-    if year is None:
-        year = int(datetime.now().year)
-    if month is None:
-        month = int(datetime.now().month)
-
-    print(mes(month), year)
-    print("Días laborables : ", count_labour_days(login, month, year))
-    print("Horas laborables: ", total_labor_hours(login, month, year))
-    print('Horas trabajadas: ', count_worked_hours(login, month, year))
+    print(resume_to_string(login, month, year))
 
 
 def resume_to_string(login, month=None, year=None):
@@ -59,30 +52,20 @@ def resume_to_string(login, month=None, year=None):
         month = int(datetime.now().month)
 
     response = "{} {}\n".format(mes(month), year)
-    response += "Días laborables : {}\n".format(count_labour_days(login, month, year))
-    response += "Horas laborables: {}\n".format(total_labor_hours(login, month, year))
-    response += "Horas trabajadas: {}\n".format(count_worked_hours(login, month, year))
+    response += "Días laborables : {}\n".format(
+        count_labour_days(login, month, year))
+    response += "Horas laborables: {}\n".format(
+        total_labor_hours(login, month, year))
+    response += "Horas trabajadas: {}\n".format(
+        count_worked_hours(login, month, year))
     return response
 
 
-def list_to_csv(login, filename, month=None, year=None):
-    file_path = Path(filename)
-    if 'user_email' in login:
-        user_name = login['user_email'].split('@')[0]
-        file_path = Path(file_path.parents[0],
-                         user_name + '-' + file_path.name)
+def list_to_csv(login, file_name, month=None, year=None):
+    file_path = filename(login, file_name)
+    csv_string = list_to_csv_string(login, month, year)
     with codecs.open(file_path, 'w', 'utf-8') as out:
-        csv_writer = csv.writer(out, delimiter=',', quotechar='"')
-        csv_writer.writerow(('entrada', 'salida', 'horas'))
-        for line in get_user_attendance_by_month(login, month, year):
-            tentry = tlocal(line[0], 'DT')
-            texit = tlocal(line[1], 'DT')
-            if line[1]:
-                hours = line[2]
-            else:
-                hours = open_session_worked_hours(login)
-
-            csv_writer.writerow((tentry, texit, hours))
+        print(csv_string, file=out)
 
 
 def list_to_csv_string(login, month=None, year=None):
@@ -424,7 +407,7 @@ def get_user_id(login):
     Es un poco ñapa mientras vemos cómo filtrar la query
     """
     user_to_find = get_user_by_email(login) if 'user_email' in login else \
-    login['uid']
+        login['uid']
     if not user_to_find:
         sys.exit('El usaurio no existe')
     users = login['conn'].execute_kw(login['db'],
@@ -485,7 +468,6 @@ def get_mail_users(login, user_id=None):
 
 
 def send_mail(mail_to, subject, message, file_name, file_data):
-
     mail_server = os.environ.get('ODOOCLI_MAIL_SERVER')
     mail_port = os.environ.get('ODOOCLI_MAIL_PORT')
     mail_tls = os.environ.get('ODOOCLI_MAIL_TLS')
