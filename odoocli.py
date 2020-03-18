@@ -558,6 +558,9 @@ if __name__ == '__main__':
             and config_parser.has_option('server', 'database'):
         server = config_parser.get('server', 'host')
         db = config_parser.get('server', 'database')
+    elif os.environ['ODOOCLIPASS'] and os.environ['ODOOCLIPASS']:
+        server = os.environ['ODOOCLIHOST']
+        db = os.environ['ODOOCLIDATABASE']
     else:
         sys.exit('Error en el archivo de configuración')
 
