@@ -12,8 +12,10 @@ correspondientes a la sesión actual, si es que hay una abierta por el usaurio).
  pip3 install -r requirements.txt
 ```
 
-Se necesita configurar la URL del servidor de Odoo y el nombre de la base de
-datos en el archivo `odoocli.conf`.
+Ya no se necesita configurar la URL del servidor de Odoo y el nombre de la base de
+datos en el archivo `odoocli.conf`, porque toma esos datos de las variables de
+entorno ODOOCLIHOST y ODOOCLIDATABASE respectivamente. Sólo si estas no existen
+trata de recurrir a `odoocli.conf` por compatibilidad.
 
 Cargará las variables de entorno del archivo `.env` (ver archivo `env.example`),
 si es que existe. Esto puede ser útil para definir las variables "ODOOCLIUSER"
