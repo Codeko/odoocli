@@ -515,10 +515,25 @@ def bulk(login, function, *argus):
 #
 ########################################################################
 
-if __name__ == '__main__':
+load_dotenv()
 
-    config_file = [
-        os.path.dirname(os.path.realpath(__file__)) + '/odoocli.conf']
+config_file = [
+    os.path.dirname(os.path.realpath(__file__)) + '/odoocli.conf']
+
+config_parser = ConfigParser()
+config_parser.read(config_file)
+
+if os.environ['ODOOCLIHOST'] and os.environ['ODOOCLIDATABASE']:
+    server = os.environ['ODOOCLIHOST']
+    db = os.environ['ODOOCLIDATABASE']
+elif config_parser.has_option('server', 'host') \
+        and config_parser.has_option('server', 'database'):
+    server = config_parser.get('server', 'host')
+    db = config_parser.get('server', 'database')
+else:
+    sys.exit('Error en el archivo de configuración')
+
+if __name__ == '__main__':
 
     help_text = """
     Muestra un resumen de la jornada laboral registrada en Odoo hasta el momento,
@@ -549,20 +564,6 @@ if __name__ == '__main__':
     Si se usa el argumento --user el programa ignorará las variables de entorno y
     mostrará un prompt solicitando la contraseña.
     """
-
-    load_dotenv()
-
-    config_parser = ConfigParser()
-    config_parser.read(config_file)
-    if config_parser.has_option('server', 'host') \
-            and config_parser.has_option('server', 'database'):
-        server = config_parser.get('server', 'host')
-        db = config_parser.get('server', 'database')
-    elif os.environ['ODOOCLIPASS'] and os.environ['ODOOCLIPASS']:
-        server = os.environ['ODOOCLIHOST']
-        db = os.environ['ODOOCLIDATABASE']
-    else:
-        sys.exit('Error en el archivo de configuración')
 
     parser = argparse.ArgumentParser(
         formatter_class=argparse.RawDescriptionHelpFormatter,

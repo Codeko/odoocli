@@ -5,24 +5,8 @@ import getpass
 import os
 import sys
 import xmlrpc.client
-from configparser import ConfigParser
-
-from dotenv import load_dotenv
 
 import odoocli
-
-config_file = [os.path.dirname(os.path.realpath(__file__)) + '/odoocli.conf']
-
-load_dotenv()
-
-config_parser = ConfigParser()
-config_parser.read(config_file)
-if config_parser.has_option('server', 'host') \
-        and config_parser.has_option('server', 'database'):
-    server = config_parser.get('server', 'host')
-    db = config_parser.get('server', 'database')
-else:
-    sys.exit('Error en el archivo de configuración')
 
 help_text = """
     Hace lo mismo que odoocli.py, pero muestra una serie de informes de todos
@@ -98,14 +82,14 @@ else:
     username = input('Username: ')
     password = getpass.getpass()
 
-common = xmlrpc.client.ServerProxy('{}/xmlrpc/2/common'.format(server))
-uid = common.authenticate(db, username, password, {})
+common = xmlrpc.client.ServerProxy('{}/xmlrpc/2/common'.format(odoocli.server))
+uid = common.authenticate(odoocli.db, username, password, {})
 
 if uid:
-    login_data = {'db': db, 'password': password, 'username': username,
+    login_data = {'db': odoocli.db, 'password': password, 'username': username,
                   'uid': uid,
                   'conn': xmlrpc.client.ServerProxy(
-                      '{}/xmlrpc/2/object'.format(server))}
+                      '{}/xmlrpc/2/object'.format(odoocli.server))}
 else:
     sys.exit('Error en el Login')
 
