@@ -523,7 +523,7 @@ config_file = [
 config_parser = ConfigParser()
 config_parser.read(config_file)
 
-if os.environ['ODOOCLIHOST'] and os.environ['ODOOCLIDATABASE']:
+if 'ODOOCLIHOST' in os.environ and 'ODOOCLIDATABASE' in os.environ:
     server = os.environ['ODOOCLIHOST']
     db = os.environ['ODOOCLIDATABASE']
 elif config_parser.has_option('server', 'host') \
