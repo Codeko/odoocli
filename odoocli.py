@@ -127,15 +127,17 @@ def list_to_screen(login, month=None, year=None):
     for line in get_user_attendance_by_month(login, month, year):
 
         if line[1]:
-            print(tlocal(line[0], 'D'), '|',
-                  tlocal(line[0], 'T'), '|',
-                  tlocal(line[1], 'T'), '|',
-                  line[2])
+            print('{} | {} | {} | {:.2f}'.format(
+                tlocal(line[0], 'D'),
+                tlocal(line[0], 'T'),
+                tlocal(line[1], 'T'),
+                line[2]))
         else:
-            print(tlocal(line[0], 'D'), '|',
-                  tlocal(line[0], 'T'), '|',
-                  tlocal(line[1], 'T'), '|',
-                  '(' + str(open_session_worked_hours(login)) + ')')
+            print('{} | {} | {} | {:.2f}'.format(
+                tlocal(line[0], 'D'),
+                tlocal(line[0], 'T'),
+                tlocal(line[1], 'T'),
+                open_session_worked_hours(login)))
 
 
 ########################################################################
@@ -590,8 +592,6 @@ if __name__ == '__main__':
     parser.add_argument('-l', '--list', action='count',
                         help='Muestra una lista de asistencias en lugar del \
                              resumen')
-    parser.add_argument('-e', '--email', type=str, dest='email',
-                        help='eMail del usuario del que se generará el informe')
     args = parser.parse_args()
 
     if args.user:
@@ -615,8 +615,6 @@ if __name__ == '__main__':
                       'uid': uid,
                       'conn': xmlrpc.client.ServerProxy(
                           '{}/xmlrpc/2/object'.format(server))}
-        if args.email:
-            login_data['user_email'] = args.email
     else:
         sys.exit('Error en el Login')
 
