@@ -504,8 +504,12 @@ def send_mail(mail_to, subject, message, file_name, file_data):
     smtp.quit()
 
 
-def bulk(login, function, *argus):
-    for user in get_mail_users(login):
+def bulk(login, mails, function, *argus):
+
+    if not mails:
+        mails = get_mail_users(login)
+
+    for user in mails:
         new_login_data = dict(login)
         new_login_data['user_email'] = user
         if count_worked_hours(new_login_data):
@@ -576,19 +580,21 @@ if __name__ == '__main__':
         description=help_text,
         epilog=epilog_text)
     parser.add_argument('-u', '--user', type=str, dest='user',
-                        help='Nombre de usuario.\nSi no se aporta se utilizará el \
-                             contenido en la variable de entorno "ODOOCLIUSER"')
+                        help='Nombre de usuario.\nSi no se aporta se \
+                        utilizará el contenido en la variable de entorno \
+                        "ODOOCLIUSER"')
     parser.add_argument('-m', '--month', type=int, dest='month',
-                        help='Número en el rango [1-12] indicando el mes del que \
-                             se mostrará el informe')
+                        help='Número en el rango [1-12] indicando el mes del \
+                        que se mostrará el informe')
     parser.add_argument('-y', '--year', type=int, dest='year',
                         help='Año del que se mostrará el informe.\nSi no se \
-                             indica el mes, el valor de este campo será ignorado')
+                             indica el mes, el valor de este campo será \
+                             ignorado')
     parser.add_argument('-f', '--file', type=str,
-                        help='Nombre del archivo en el que se guardará un listado \
-                             de asistencias (parecido al mostrado con --list) en \
-                             formato CSV\nEste argumento hace que se ignore la \
-                             opción --list')
+                        help='Nombre del archivo en el que se guardará un \
+                        listado de asistencias (parecido al mostrado con \
+                        --list) en formato CSV\nEste argumento hace que se \
+                        ignore la opción --list')
     parser.add_argument('-l', '--list', action='count',
                         help='Muestra una lista de asistencias en lugar del \
                              resumen')

@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 
 import argparse
 import getpass
@@ -9,39 +9,43 @@ import xmlrpc.client
 import odoocli
 
 help_text = """
-    Hace lo mismo que odoocli.py, pero muestra una serie de informes de todos
-    los usuarios, en lugar de sólo uno:
+Hace lo mismo que odoocli.py, pero muestra una serie de informes de los
+usuarios solitiados con el argumento --email, en lugar de sólo uno:
 
-    Muestra un resumen de la jornada laboral registrada en Odoo hasta el momento,
-    indicando los días y horas laborables totales del mes, las horas laborables
-    hasta el día actual y las horas trabajadas hasta el momento (incluídas las
-    correspondientes a la sesión actual, si es que hay una abierta por el usuario).
-    """
+Muestra un resumen de la jornada laboral registrada en Odoo hasta el momento,
+indicando los días y horas laborables totales del mes, las horas laborables
+hasta el día actual y las horas trabajadas hasta el momento (incluídas las
+correspondientes a la sesión actual, si es que hay una abierta por el usuario).
+"""
 epilog_text = """
-    Si se indica un mes concreto con la opción --month, se mostrará el resumen
-    total de ese mes. Se puede concretar el año con la opción --year.
 
-    Si se usa el flag --list se mostrará un listado de asistencias en lugar del
-    resumen.
+Si no se indican uno o más correos de usuario con la opción --email se
+emitirán informes de todos los usuarios activos.
 
-    Con --file NOMBRE_DE ARCHIVO se guarará el listado de asistencias en un archivo
-    en formato CSV por cada usuario. El nombre de cada uno de los archivos generados
-    será "usuario-NOMBRE_DE ARCHIVO", donde "usuario" es el nombre extraído del
-    correo electrónico de cada usaurio. 
+Si se indica un mes concreto con la opción --month, se mostrará el resumen
+total de ese mes. Se puede concretar el año con la opción --year.
 
-    Si existen las variables de entorno "ODOOCLIUSER" y "ODOOCLIPASS", se usarán
-    para el login en Odoo a menos que se indique un usuario con el argumento
-    --user.
+Si se usa el flag --list se mostrará un listado de asistencias en lugar del
+resumen.
 
-    Si existe la variable "ODOOCLIUSER" pero no "ODOOCLIPASS", el programa tomará
-    el usuario de "ODOOCLIUSER" y mostrará un prompt solicitando la contraseña.
+Con --file NOMBRE_DE ARCHIVO se guarará el listado de asistencias en un archivo
+en formato CSV por cada usuario. El nombre de cada uno de los archivos creados
+será "usuario-NOMBRE_DE ARCHIVO", donde "usuario" es el nombre extraído del
+correo electrónico de cada usaurio. 
 
-    Si tampoco existe la variable "ODOOCLIUSER", se mostrarán sendos prompts
-    solicitando el nombre de usuario y la contraseña.
+Si existen las variables de entorno "ODOOCLIUSER" y "ODOOCLIPASS", se usarán
+para el login en Odoo a menos que se indique un usuario con el argumento
+--user.
 
-    Si se usa el argumento --user el programa ignorará las variables de entorno y
-    mostrará un prompt solicitando la contraseña.
-    """
+Si existe la variable "ODOOCLIUSER" pero no "ODOOCLIPASS", el programa tomará
+el usuario de "ODOOCLIUSER" y mostrará un prompt solicitando la contraseña.
+
+Si tampoco existe la variable "ODOOCLIUSER", se mostrarán sendos prompts
+solicitando el nombre de usuario y la contraseña.
+
+Si se usa el argumento --user el programa ignorará las variables de entorno y
+mostrará un prompt solicitando la contraseña.
+"""
 
 parser = argparse.ArgumentParser(
     formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -66,6 +70,9 @@ parser.add_argument('-l', '--list', action='count',
                          resumen')
 parser.add_argument('-r', '--report', action='count',
                     help='Envía informes por email')
+parser.add_argument('-e', '--email', nargs='*',
+                    help='Lista de emails de usuarios sbre los que se \
+                         mostrará la información')
 
 args = parser.parse_args()
 
@@ -93,42 +100,48 @@ if uid:
 else:
     sys.exit('Error en el Login')
 
+
+if args.email:
+    mails = args.email
+else:
+    mails = None
+
 if args.month and (args.month < 1 or args.month > 12):
     sys.exit("Mes fuera de rango")
 if args.file:
     if args.month:
         if args.year:
-            odoocli.bulk(login_data, odoocli.list_to_csv, args.file,
+            odoocli.bulk(login_data, mails, odoocli.list_to_csv, args.file,
                          args.month, args.year)
         else:
-            odoocli.bulk(login_data, odoocli.list_to_csv, args.file,
+            odoocli.bulk(login_data, mails, odoocli.list_to_csv, args.file,
                          args.month)
     else:
-        odoocli.bulk(login_data, odoocli.list_to_csv, args.file)
+        odoocli.bulk(login_data, mails, odoocli.list_to_csv, args.file)
 elif args.report:
     if args.month:
         if args.year:
-            odoocli.bulk(login_data, odoocli.mail_report, args.month,
+            odoocli.bulk(login_data, mails, odoocli.mail_report, args.month,
                          args.year)
         else:
-            odoocli.bulk(login_data, odoocli.mail_report, args.month)
+            odoocli.bulk(login_data, mails, odoocli.mail_report, args.month)
     else:
-        odoocli.bulk(login_data, odoocli.mail_report)
+        odoocli.bulk(login_data, mails, odoocli.mail_report)
 elif args.list:
     if args.month:
         if args.year:
-            odoocli.bulk(login_data, odoocli.list_to_screen, args.month,
+            odoocli.bulk(login_data, mails, odoocli.list_to_screen, args.month,
                          args.year)
         else:
-            odoocli.bulk(login_data, odoocli.list_to_screen, args.month)
+            odoocli.bulk(login_data, mails, odoocli.list_to_screen, args.month)
     else:
-        odoocli.bulk(login_data, odoocli.list_to_screen)
+        odoocli.bulk(login_data, mails, odoocli.list_to_screen)
 else:
     if args.month:
         if args.year:
-            odoocli.bulk(login_data, odoocli.show_resume, args.month,
+            odoocli.bulk(login_data, mails, odoocli.show_resume, args.month,
                          args.year)
         else:
-            odoocli.bulk(login_data, odoocli.show_resume, args.month)
+            odoocli.bulk(login_data, mails, odoocli.show_resume, args.month)
     else:
-        odoocli.bulk(login_data, odoocli.show_resume_now)
+        odoocli.bulk(login_data, mails, odoocli.show_resume_now)
