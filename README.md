@@ -57,8 +57,13 @@ mostrará un prompt solicitando la contraseña.
 odooclibulk.py [-h] [-u USER] [-m MONTH] [-y YEAR] [-f FILE] [-l] [-r]
 ```
 
-Este scrip funciona igual que odoocli.py, pero genera una serie de informes de
-todos los usuarios activos, en lugar de sólo un usuario.
+Este scrip funciona igual que odoocli.py, pero genera, en lugar de un informe
+de un sólo un usuario, una serie de informes de los usaurios indacados con el
+argumento --email, que admite una lista de correos electrónicos separados
+por espacios.
+
+En caso de que no se asigne ningun correo en --email, se mostrarán todos los
+usuarios activos.
 
 Si se usa la opción `[-f FILE]`, se crearán tantos archivos como usuarios activos
 haya, con nombres del tipo user-FILE, donde "FILE" es el nombre pasado como argumento
