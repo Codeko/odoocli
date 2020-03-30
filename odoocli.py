@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 
 import argparse
 import calendar
@@ -29,10 +29,14 @@ def show_resume_now(login):
     """
     Informe del mes corriente:
     """
-    print("Días laborables de este mes: ", count_labour_days(login))
-    print("Horas laborables de este mes: ", total_labor_hours(login))
-    print('Horas laborables hasta hoy: ', labor_hours_until_today(login))
-    print('Horas trabajadas hasta ahora: ', count_worked_hours(login))
+    print("Días laborables de este mes: {}".format(
+        count_labour_days(login)))
+    print("Horas laborables de este mes: {:.2f}".format(
+        total_labor_hours(login)))
+    print('Horas laborables hasta hoy: {:.2f}'.format(
+        labor_hours_until_today(login)))
+    print('Horas trabajadas hasta ahora: {:.2f}'.format(
+        count_worked_hours(login)))
 
 
 def show_resume(login, month=None, year=None):
@@ -54,9 +58,9 @@ def resume_to_string(login, month=None, year=None):
     response = "{} {}\n".format(mes(month), year)
     response += "Días laborables: {}\n".format(
         count_labour_days(login, month, year))
-    response += "Horas laborables: {}\n".format(
+    response += "Horas laborables: {:.2f}\n".format(
         total_labor_hours(login, month, year))
-    response += "Horas trabajadas: {}\n".format(
+    response += "Horas trabajadas: {:.2f}\n".format(
         count_worked_hours(login, month, year))
     return response
 
@@ -79,7 +83,7 @@ def list_to_csv_string(login, month=None, year=None):
             hours = line[2]
         else:
             hours = open_session_worked_hours(login)
-        csv_writer.writerow((tentry, texit, hours))
+        csv_writer.writerow((tentry, texit, '{:.2f}'.format(hours)))
     return mem_file.getvalue()
 
 
@@ -409,7 +413,7 @@ def get_user_id(login):
     user_to_find = get_user_by_email(login) if 'user_email' in login else \
         login['uid']
     if not user_to_find:
-        sys.exit('El usaurio no existe')
+        sys.exit('El usuario no existe')
     users = login['conn'].execute_kw(login['db'],
                                      login['uid'],
                                      login['password'],
