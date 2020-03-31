@@ -101,6 +101,11 @@ def filename(login, path):
 
 def mail_report(login, month=None, year=None):
 
+    if year is None:
+        year = int(datetime.now().year)
+    if month is None:
+        month = int(datetime.now().month)
+
     if 'user_email' in login:
         mail_to = login['user_email']
     else:

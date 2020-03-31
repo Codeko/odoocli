@@ -117,11 +117,10 @@ if args.file:
                      current_month, current_year)
     else:
         odoocli.bulk(login_data, mails, odoocli.list_to_csv, args.file)
-elif args.report:
+elif args.send:
     if args.month:
         odoocli.bulk(login_data, mails, odoocli.mail_report, current_month,
                      current_year)
-
     else:
         odoocli.bulk(login_data, mails, odoocli.mail_report)
 elif args.list:
