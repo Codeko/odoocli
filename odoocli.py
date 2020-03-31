@@ -29,13 +29,13 @@ def show_resume_now(login):
     """
     Informe del mes corriente:
     """
-    print("Días laborables de este mes: {}".format(
+    print("Días laborables de este mes:\t{}".format(
         count_labour_days(login)))
-    print("Horas laborables de este mes: {:.2f}".format(
+    print("Horas laborables de este mes:\t{:.2f}".format(
         total_labor_hours(login)))
-    print('Horas laborables hasta hoy: {:.2f}'.format(
+    print('Horas laborables hasta hoy:\t{:.2f}'.format(
         labor_hours_until_today(login)))
-    print('Horas trabajadas hasta ahora: {:.2f}'.format(
+    print('Horas trabajadas hasta ahora:\t{:.2f}'.format(
         count_worked_hours(login)))
 
 
@@ -56,19 +56,22 @@ def resume_to_string(login, month=None, year=None):
         month = int(datetime.now().month)
 
     response = "{} {}\n".format(mes(month), year)
-    response += "Días laborables: {}\n".format(
+    response += "Días laborables:\t{}\n".format(
         count_labour_days(login, month, year))
-    response += "Horas laborables: {:.2f}\n".format(
+    response += "Horas laborables:\t{:.2f}\n".format(
         total_labor_hours(login, month, year))
-    response += "Horas trabajadas: {:.2f}\n".format(
+    response += "Horas trabajadas:\t{:.2f}\n".format(
         count_worked_hours(login, month, year))
     return response
 
 
 def list_to_csv(login, file_name, month=None, year=None):
     file_path = filename(login, file_name)
+
+    summary = resume_to_string(login, month, year)
     csv_string = list_to_csv_string(login, month, year)
     with codecs.open(file_path, 'w', 'utf-8') as out:
+        print(summary, file=out)
         print(csv_string, file=out)
 
 
