@@ -100,17 +100,6 @@ def filename(login, path):
 
 
 def mail_report(login, month=None, year=None):
-    """
-    OJO: Este caso es especial porque, por defecto,
-    no manda el informe del mes corriente, sino el del mes pasado
-    """
-    if year is None:
-        year = int(datetime.now().year)
-    if month is None:
-        month = int(datetime.now().month) - 1
-    if month == 0:
-        month = 12
-        year -= 1
 
     if 'user_email' in login:
         mail_to = login['user_email']
