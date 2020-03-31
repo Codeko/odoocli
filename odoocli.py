@@ -486,6 +486,7 @@ def send_mail(mail_to, subject, message, file_name, file_data):
     mail_password = os.environ.get('ODOOCLI_MAIL_PASSWORD')
     mail_reply_to = os.environ.get('ODOOCLI_MAIL_REPLY_TO')
     mail_cc = os.environ.get('ODOOCLI_MAIL_CC')
+    mail_bcc = os.environ.get('ODOOCLI_MAIL_BCC')
 
     mail_to_list = [mail_to]
 
@@ -498,6 +499,8 @@ def send_mail(mail_to, subject, message, file_name, file_data):
     if mail_cc:
         msg['Cc'] = mail_cc
         mail_to_list.append(mail_cc)
+    if mail_bcc:
+        mail_to_list.append(mail_bcc)
     if mail_reply_to:
         msg.add_header('reply-to', mail_reply_to)
 
