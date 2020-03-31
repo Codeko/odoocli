@@ -485,6 +485,9 @@ def send_mail(mail_to, subject, message, file_name, file_data):
     mail_user = os.environ.get('ODOOCLI_MAIL_USER')
     mail_password = os.environ.get('ODOOCLI_MAIL_PASSWORD')
     mail_reply_to = os.environ.get('ODOOCLI_MAIL_REPLY_TO')
+    mail_cc = os.environ.get('ODOOCLI_MAIL_CC')
+
+    mail_to_list = [mail_to]
 
     msg = MIMEMultipart()
     msg['From'] = mail_from
@@ -492,6 +495,9 @@ def send_mail(mail_to, subject, message, file_name, file_data):
     msg['Date'] = formatdate(localtime=True)
     msg['Subject'] = subject
 
+    if mail_cc:
+        msg['Cc'] = mail_cc
+        mail_to_list.append(mail_cc)
     if mail_reply_to:
         msg.add_header('reply-to', mail_reply_to)
 
@@ -508,7 +514,7 @@ def send_mail(mail_to, subject, message, file_name, file_data):
     if mail_tls:
         smtp.starttls()
     smtp.login(mail_user, mail_password)
-    smtp.sendmail(mail_from, [mail_to], msg.as_string())
+    smtp.sendmail(mail_from, mail_to_list, msg.as_string())
     smtp.quit()
 
 
