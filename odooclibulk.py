@@ -25,6 +25,9 @@ emitirán informes de todos los usuarios activos.
 Si se indica un mes concreto con la opción --month, se mostrará el resumen
 total de ese mes. Se puede concretar el año con la opción --year.
 
+--month admite números negativos. En ese caso, el número se restará del
+mes actual, de modo que "-m -1" mostrará el mes anterior al corriente. 
+
 Si se usa el flag --list se mostrará un listado de asistencias en lugar del
 resumen.
 
@@ -106,42 +109,30 @@ if args.email:
 else:
     mails = None
 
-if args.month and (args.month < 1 or args.month > 12):
-    sys.exit("Mes fuera de rango")
+current_month, current_year = odoocli.get_args_date(args.month, args.year)
+
 if args.file:
     if args.month:
-        if args.year:
-            odoocli.bulk(login_data, mails, odoocli.list_to_csv, args.file,
-                         args.month, args.year)
-        else:
-            odoocli.bulk(login_data, mails, odoocli.list_to_csv, args.file,
-                         args.month)
+        odoocli.bulk(login_data, mails, odoocli.list_to_csv, args.file,
+                     current_month, current_year)
     else:
         odoocli.bulk(login_data, mails, odoocli.list_to_csv, args.file)
 elif args.report:
     if args.month:
-        if args.year:
-            odoocli.bulk(login_data, mails, odoocli.mail_report, args.month,
-                         args.year)
-        else:
-            odoocli.bulk(login_data, mails, odoocli.mail_report, args.month)
+        odoocli.bulk(login_data, mails, odoocli.mail_report, current_month,
+                     current_year)
+
     else:
         odoocli.bulk(login_data, mails, odoocli.mail_report)
 elif args.list:
     if args.month:
-        if args.year:
-            odoocli.bulk(login_data, mails, odoocli.list_to_screen, args.month,
-                         args.year)
-        else:
-            odoocli.bulk(login_data, mails, odoocli.list_to_screen, args.month)
+        odoocli.bulk(login_data, mails, odoocli.list_to_screen, current_month,
+                     current_year)
     else:
         odoocli.bulk(login_data, mails, odoocli.list_to_screen)
 else:
     if args.month:
-        if args.year:
-            odoocli.bulk(login_data, mails, odoocli.show_resume, args.month,
-                         args.year)
-        else:
-            odoocli.bulk(login_data, mails, odoocli.show_resume, args.month)
+        odoocli.bulk(login_data, mails, odoocli.show_resume, current_month,
+                     current_year)
     else:
         odoocli.bulk(login_data, mails, odoocli.show_resume_now)

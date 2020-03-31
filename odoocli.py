@@ -411,6 +411,29 @@ def mes(month):
             'Diciembre')[month - 1]
 
 
+def get_args_date(month, year):
+    if month:
+        new_month, new_year = month, year
+        if not year:
+            year = datetime.now().year
+        if month < 0:
+            current = int(datetime.now().month)
+            result = divmod(current - 1 + month, 12)
+            new_month = result[1] + 1
+            new_year = year + result[0]
+        elif month == 0:
+            new_month = None
+            new_year = None
+        elif 0 < month < 13:
+            new_month = month
+            new_year = year
+        elif args.month > 12:
+            sys.exit("Mes fuera de rango")
+        return new_month, new_year
+    else:
+        return month, year
+
+
 def get_user_id(login):
     """
     Retorna el id en hr.employee del usuario logeado.
@@ -563,34 +586,37 @@ else:
 if __name__ == '__main__':
 
     help_text = """
-    Muestra un resumen de la jornada laboral registrada en Odoo hasta el momento,
-    indicando los días y horas laborables totales del mes, las horas laborables
-    hasta el día actual y las horas trabajadas hasta el momento (incluídas las
-    correspondientes a la sesión actual, si es que hay una abierta por el usuario).
-    """
+Muestra un resumen de la jornada laboral registrada en Odoo hasta el momento,
+indicando los días y horas laborables totales del mes, las horas laborables
+hasta el día actual y las horas trabajadas hasta el momento (incluídas las
+correspondientes a la sesión actual, si es que hay una abierta por el usuario).
+"""
     epilog_text = """
-    Si se indica un mes concreto con la opción --month, se mostrará el resumen
-    total de ese mes. Se puede concretar el año con la opción --year.
+Si se indica un mes concreto con la opción --month, se mostrará el resumen
+total de ese mes. Se puede concretar el año con la opción --year.
 
-    Si se usa el flag --list se mostrará un listado de asistencias en lugar del
-    resumen.
+--month admite números negativos. En ese caso, el número se restará del
+mes actual, de modo que "-m -1" mostrará el mes anterior al corriente. 
 
-    Con --file NOMBRE_DE ARCHIVO se guarará el listado de asistencias en un archivo
-    en formato CSV.
+Si se usa el flag --list se mostrará un listado de asistencias en lugar del
+resumen.
 
-    Si existen las variables de entorno "ODOOCLIUSER" y "ODOOCLIPASS", se usarán
-    para el login en Odoo a menos que se indique un usuario con el argumento
-    --user.
+Con --file NOMBRE_DE ARCHIVO se guarará el listado de asistencias en un archivo
+en formato CSV.
 
-    Si existe la variable "ODOOCLIUSER" pero no "ODOOCLIPASS", el programa tomará
-    el usuario de "ODOOCLIUSER" y mostrará un prompt solicitando la contraseña.
+Si existen las variables de entorno "ODOOCLIUSER" y "ODOOCLIPASS", se usarán
+para el login en Odoo a menos que se indique un usuario con el argumento
+--user.
 
-    Si tampoco existe la variable "ODOOCLIUSER", se mostrarán sendos prompts
-    solicitando el nombre de usuario y la contraseña.
+Si existe la variable "ODOOCLIUSER" pero no "ODOOCLIPASS", el programa tomará
+el usuario de "ODOOCLIUSER" y mostrará un prompt solicitando la contraseña.
 
-    Si se usa el argumento --user el programa ignorará las variables de entorno y
-    mostrará un prompt solicitando la contraseña.
-    """
+Si tampoco existe la variable "ODOOCLIUSER", se mostrarán sendos prompts
+solicitando el nombre de usuario y la contraseña.
+
+Si se usa el argumento --user el programa ignorará las variables de entorno y
+mostrará un prompt solicitando la contraseña.
+"""
 
     parser = argparse.ArgumentParser(
         formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -641,29 +667,20 @@ if __name__ == '__main__':
     else:
         sys.exit('Error en el Login')
 
-    if args.month and (args.month < 1 or args.month > 12):
-        sys.exit("Mes fuera de rango")
+    current_month, current_year = get_args_date(args.month, args.year)
+
     if args.file:
         if args.month:
-            if args.year:
-                list_to_csv(login_data, args.file, args.month, args.year)
-            else:
-                list_to_csv(login_data, args.file, args.month)
+            list_to_csv(login_data, args.file, current_month, current_year)
         else:
             list_to_csv(login_data, args.file)
     elif args.list:
         if args.month:
-            if args.year:
-                list_to_screen(login_data, args.month, args.year)
-            else:
-                list_to_screen(login_data, args.month)
+            list_to_screen(login_data, current_month, current_year)
         else:
             list_to_screen(login_data)
     else:
         if args.month:
-            if args.year:
-                show_resume(login_data, args.month, args.year)
-            else:
-                show_resume(login_data, args.month)
+            show_resume(login_data, current_month, current_year)
         else:
             show_resume_now(login_data)
