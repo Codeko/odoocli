@@ -118,7 +118,8 @@ def mail_report(login, month=None, year=None):
         mail_to = tuple(get_mail_users(login, login['uid']))[0]
     name = "asistencia{}-{}.csv".format(year, month)
     file_name = filename(login, name)
-    file_content = list_to_csv_string(login, month, year)
+    file_content = resume_to_string(login, month, year)
+    file_content += list_to_csv_string(login, month, year)
     body_text = resume_to_string(login, month, year)
     subject = "Informe asistencia {} {}".format(mes(month), year)
     send_mail(mail_to, subject, body_text, file_name, file_content)
