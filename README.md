@@ -54,7 +54,7 @@ mostrará un prompt solicitando la contraseña.
 ## odooclibulk.py
 
 ```
-odooclibulk.py [-h] [-u USER] [-m MONTH] [-y YEAR] [-f FILE] [-l] [-r]
+odooclibulk.py [-h] [-u USER] [-m MONTH] [-y YEAR] [-f FILE] [-l] [-s]
 ```
 
 Este scrip funciona igual que odoocli.py, pero genera, en lugar de un informe
@@ -65,12 +65,12 @@ por espacios.
 En caso de que no se asigne ningun correo en --email, se mostrarán todos los
 usuarios activos.
 
-Si se usa la opción `[-f FILE]`, se crearán tantos archivos como usuarios activos
-haya, con nombres del tipo user-FILE, donde "FILE" es el nombre pasado como argumento
+Si se usa la opción `[-f FILE]`, se crearán tantos archivos como usuarios haya,
+con nombres del tipo user-FILE, donde "FILE" es el nombre pasado como argumento
 y "user" es el nombre extraído del correo elecrónico del usuario
 (la parte de delante de la arroba) 
 
-el argumento `[-r]` enviará un correo electrónicvo a cada usaurio activo con un resumen
+el argumento `[-s]` enviará un correo electrónicvo a cada usaurio con un resumen
 del mes indicado (o el mes anterior al corriente, si no se le indica ninguno) y un
 listado de asistencias en un archivo adjunto en formato CSV. 
 
@@ -83,3 +83,6 @@ Para la configuración el envío de correos, se usan las siguientes variables de
 * ODOOCLI_MAIL_USER
 * ODOOCLI_MAIL_PASSWORD
 * ODOOCLI_MAIL_FROM
+* ODOOCLI_MAIL_REPLY_TO
+* ODOOCLI_MAIL_CC
+* ODOOCLI_MAIL_BCC

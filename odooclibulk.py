@@ -71,7 +71,7 @@ parser.add_argument('-f', '--file', type=str,
 parser.add_argument('-l', '--list', action='count',
                     help='Muestra una lista de asistencias en lugar del \
                          resumen')
-parser.add_argument('-r', '--report', action='count',
+parser.add_argument('-s', '--send', action='count',
                     help='Envía informes por email')
 parser.add_argument('-e', '--email', nargs='*',
                     help='Lista de emails de usuarios sbre los que se \
