@@ -484,12 +484,16 @@ def send_mail(mail_to, subject, message, file_name, file_data):
     mail_from = os.environ.get('ODOOCLI_MAIL_FROM')
     mail_user = os.environ.get('ODOOCLI_MAIL_USER')
     mail_password = os.environ.get('ODOOCLI_MAIL_PASSWORD')
+    mail_reply_to = os.environ.get('ODOOCLI_MAIL_REPLY_TO')
 
     msg = MIMEMultipart()
     msg['From'] = mail_from
     msg['To'] = mail_to
     msg['Date'] = formatdate(localtime=True)
     msg['Subject'] = subject
+
+    if mail_reply_to:
+        msg.add_header('reply-to', mail_reply_to)
 
     msg.attach(MIMEText(message))
 
