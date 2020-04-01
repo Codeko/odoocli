@@ -1,0 +1,5 @@
+        'year': ${year}
+        'month': ${month}
+        'filename': ${filename}
+        'summary': ${summary}
+        'csv_table': ${csv_table}

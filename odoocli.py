@@ -19,6 +19,7 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.utils import formatdate
 from pathlib import Path
+from string import Template
 
 from dotenv import load_dotenv
 
@@ -105,17 +106,30 @@ def mail_report(login, month=None, year=None):
         year = int(datetime.now().year)
     if month is None:
         month = int(datetime.now().month)
-
     if 'user_email' in login:
         mail_to = login['user_email']
     else:
         mail_to = tuple(get_mail_users(login, login['uid']))[0]
     name = "asistencia{}-{}.csv".format(year, month)
     file_name = filename(login, name)
-    file_content = resume_to_string(login, month, year)
-    file_content += list_to_csv_string(login, month, year)
-    body_text = resume_to_string(login, month, year)
+    summary = resume_to_string(login, month, year)
+    csv_table = list_to_csv_string(login, month, year)
+    file_content = summary + csv_table
     subject = "Informe asistencia {} {}".format(mes(month), year)
+    mail_tpt = ''
+    mail_tpt_file = os.path.dirname(
+        os.path.realpath(__file__)) + '/mail_tpt.txt'
+    if Path(mail_tpt_file).is_file():
+        with open(mail_tpt_file) as f:
+            mail_tpt = f.read()
+    terms = {
+        'year': year,
+        'month': month,
+        'filename': file_name,
+        'summary': summary,
+        'csv_table': csv_table
+    }
+    body_text = Template(mail_tpt).safe_substitute(terms)
     send_mail(mail_to, subject, body_text, file_name, file_content)
 
 

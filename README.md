@@ -86,3 +86,17 @@ Para la configuración el envío de correos, se usan las siguientes variables de
 * ODOOCLI_MAIL_REPLY_TO
 * ODOOCLI_MAIL_CC
 * ODOOCLI_MAIL_BCC
+
+La plantilla para el correo elecrónico se encuentra en `mail_tpt.txt`.
+Dispone de las siguientes variables para sustituir:
+
+* ${year}
+    Año en número
+* ${month}
+    Mes en número
+* ${filename}
+    Nombre del fichero CSV
+* ${summary}
+    Resumen del mes
+* ${csv_table}
+    Datos de horario en tabla CSV
