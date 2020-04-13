@@ -76,6 +76,9 @@ parser.add_argument('-s', '--send', action='count',
 parser.add_argument('-e', '--email', nargs='*',
                     help='Lista de emails de usuarios sbre los que se \
                          mostrará la información')
+parser.add_argument('-a', '--accumulated', action='count',
+                    help='Muestra un resumen de todos los meses desde \
+                    enero en lugar del resumen habitual')
 
 args = parser.parse_args()
 
@@ -131,7 +134,14 @@ elif args.list:
         odoocli.bulk(login_data, mails, odoocli.list_to_screen)
 else:
     if args.month:
-        odoocli.bulk(login_data, mails, odoocli.show_resume, current_month,
-                     current_year)
+        if args.accumulated:
+            odoocli.bulk(login_data, mails, odoocli.year_summary,
+                         current_month, current_year)
+        else:
+            odoocli.bulk(login_data, mails, odoocli.show_resume, current_month,
+                         current_year)
     else:
-        odoocli.bulk(login_data, mails, odoocli.show_resume_now)
+        if args.accumulated:
+            odoocli.bulk(login_data, mails, odoocli.year_summary)
+        else:
+            odoocli.bulk(login_data, mails, odoocli.show_resume_now)
