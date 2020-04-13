@@ -25,11 +25,17 @@ y "ODOOCLIPASS".
 ## Uso
 
 ```
-odoocli.py [-h] [-u USER] [-m MONTH] [-y YEAR] [-f FILE] [-l]
+odoocli.py [-h] [-u USER] [-m MONTH] [-y YEAR] [-f FILE] [-l] [-a]
 ```
 
-Si se indica un mes concreto con la opción --month, se mostrará el resumen
+Si se indica un mes concreto con la opción `[-m]` `--month`, se mostrará el resumen
 total de ese mes. Se puede concretar el año con la opción `[-y]`.
+
+`--month` admite números negativos, que se restrán del mes actual para obtener el
+mes del que se emitirá el informe.
+
+El flag `[-a]` hará que se muestre un resumen acumulado desde enero hasta el mes
+actual (o hasta le indicado en `[-m]`) en lugar del resumen mensual. 
 
 Si se usa el flag `[-l]` se mostrará un listado de asistencias en lugar del
 resumen.
@@ -54,7 +60,7 @@ mostrará un prompt solicitando la contraseña.
 ## odooclibulk.py
 
 ```
-odooclibulk.py [-h] [-u USER] [-m MONTH] [-y YEAR] [-f FILE] [-l] [-s]
+odooclibulk.py [-h] [-u USER] [-m MONTH] [-y YEAR] [-f FILE] [-l] [-s] [-a]
 ```
 
 Este scrip funciona igual que odoocli.py, pero genera, en lugar de un informe
@@ -70,10 +76,12 @@ con nombres del tipo user-FILE, donde "FILE" es el nombre pasado como argumento
 y "user" es el nombre extraído del correo elecrónico del usuario
 (la parte de delante de la arroba) 
 
-el argumento `[-s]` enviará un correo electrónicvo a cada usaurio con un resumen
-del mes indicado (o el mes anterior al corriente, si no se le indica ninguno) y un
-listado de asistencias en un archivo adjunto en formato CSV. 
+El flag `[-s]` enviará un correo electrónico a cada usuario con un resumen
+del mes indicado  y un listado de asistencias en un archivo adjunto en formato CSV. 
 
+El argumento `[-e EMAILS]` `--email` permite indicar uno o más correos electrónicos
+de usuarios, que serán sobre los que se emita el imforme. 
+ 
 Para la configuración el envío de correos, se usan las siguientes variables de entorno
 (ver archivo `env.example`):
 
