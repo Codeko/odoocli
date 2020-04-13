@@ -533,8 +533,8 @@ def send_mail(mail_to, subject, message, file_name, file_data):
     mail_server = os.environ.get('ODOOCLI_MAIL_SERVER')
     mail_port = os.environ.get('ODOOCLI_MAIL_PORT')
     mail_tls = os.environ.get('ODOOCLI_MAIL_TLS')
-    mail_from = os.environ.get('ODOOCLI_MAIL_FROM')
     mail_user = os.environ.get('ODOOCLI_MAIL_USER')
+    mail_from = os.environ.get('ODOOCLI_MAIL_FROM') or mail_user
     mail_password = os.environ.get('ODOOCLI_MAIL_PASSWORD')
     mail_reply_to = os.environ.get('ODOOCLI_MAIL_REPLY_TO')
     mail_cc = os.environ.get('ODOOCLI_MAIL_CC')
@@ -717,7 +717,6 @@ mostrará un prompt solicitando la contraseña.
                 year_summary(login_data, current_month, current_year)
             else:
                 show_resume(login_data, current_month, current_year)
-
         else:
             if args.accumulated:
                 year_summary(login_data)
