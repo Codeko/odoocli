@@ -66,6 +66,27 @@ def resume_to_string(login, month=None, year=None):
     return response
 
 
+def year_summary(login, month=None, year=None):
+    """
+    resumen desde enero hasta el mes indicado
+    """
+    if year is None:
+        year = int(datetime.now().year)
+    if month is None:
+        month = int(datetime.now().month)
+
+    labor_hours = 0
+    worked_hours = 0
+
+    for m in range(1, month + 1):
+        labor_hours += total_labor_hours(login, m, year)
+        worked_hours += count_worked_hours(login, m, year)
+
+    response = "Horas laborables:\t{:.2f}\n".format(labor_hours)
+    response += "Horas trabajadas:\t{:.2f}\n".format(worked_hours)
+    print(response)
+
+
 def list_to_csv(login, file_name, month=None, year=None):
     file_path = filename(login, file_name)
 
@@ -649,6 +670,9 @@ mostrará un prompt solicitando la contraseña.
     parser.add_argument('-l', '--list', action='count',
                         help='Muestra una lista de asistencias en lugar del \
                              resumen')
+    parser.add_argument('-a', '--accumulated', action='count',
+                        help='Muestra una lista de asistencias en lugar del \
+                             resumen')
     args = parser.parse_args()
 
     if args.user:
@@ -689,6 +713,13 @@ mostrará un prompt solicitando la contraseña.
             list_to_screen(login_data)
     else:
         if args.month:
-            show_resume(login_data, current_month, current_year)
+            if args.accumulated:
+                year_summary(login_data, current_month, current_year)
+            else:
+                show_resume(login_data, current_month, current_year)
+
         else:
-            show_resume_now(login_data)
+            if args.accumulated:
+                year_summary(login_data)
+            else:
+                show_resume_now(login_data)
