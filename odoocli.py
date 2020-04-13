@@ -671,8 +671,8 @@ mostrará un prompt solicitando la contraseña.
                         help='Muestra una lista de asistencias en lugar del \
                              resumen')
     parser.add_argument('-a', '--accumulated', action='count',
-                        help='Muestra una lista de asistencias en lugar del \
-                             resumen')
+                        help='Muestra un resumen de todos los meses desde \
+                        enero en lugar del resumen habitual')
     args = parser.parse_args()
 
     if args.user:
