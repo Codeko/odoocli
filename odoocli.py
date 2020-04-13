@@ -550,7 +550,7 @@ def get_name_users(login, user_id=None):
                                          'search_read',
                                          [[('id', '=',
                                             user_id)]],
-                                         {'fields': ['email']})
+                                         {'fields': ['display_name']})
     else:
         users = login['conn'].execute_kw(login['db'],
                                          login['uid'],
