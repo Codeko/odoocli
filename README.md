@@ -102,9 +102,15 @@ Dispone de las siguientes variables para sustituir:
     Año en número
 * ${month}
     Mes en número
+* ${month_name}
+    Mes en texto
 * ${filename}
     Nombre del fichero CSV
 * ${summary}
     Resumen del mes
 * ${csv_table}
     Datos de horario en tabla CSV
+* ${user_name}
+    Nombre del usaurio
+* ${user_email}
+    Email del usaurio

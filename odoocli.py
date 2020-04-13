@@ -44,6 +44,11 @@ def show_resume(login, month=None, year=None):
     """
     Informe del mes pasado como argumento:
     """
+    if year is None:
+        year = int(datetime.now().year)
+    if month is None:
+        month = int(datetime.now().month)
+    print("{} {}\n".format(mes(month), year))
     print(resume_to_string(login, month, year))
 
 
@@ -56,8 +61,7 @@ def resume_to_string(login, month=None, year=None):
     if month is None:
         month = int(datetime.now().month)
 
-    response = "{} {}\n".format(mes(month), year)
-    response += "Días laborables:\t{}\n".format(
+    response = "Días laborables:\t{}\n".format(
         count_labour_days(login, month, year))
     response += "Horas laborables:\t{:.2f}\n".format(
         total_labor_hours(login, month, year))
@@ -131,6 +135,7 @@ def mail_report(login, month=None, year=None):
         mail_to = login['user_email']
     else:
         mail_to = tuple(get_mail_users(login, login['uid']))[0]
+    user_name = tuple(get_name_users(login, login['uid']))[0]
     name = "asistencia{}-{}.csv".format(year, month)
     file_name = filename(login, name)
     summary = resume_to_string(login, month, year)
@@ -144,8 +149,11 @@ def mail_report(login, month=None, year=None):
         with open(mail_tpt_file) as f:
             mail_tpt = f.read()
     terms = {
+        'user_name': user_name,
+        'user_email': mail_to,
         'year': year,
         'month': month,
+        'month_name': mes(month),
         'filename': file_name,
         'summary': summary,
         'csv_table': csv_table
@@ -527,6 +535,32 @@ def get_mail_users(login, user_id=None):
                                          {'fields': ['email']})
     for user in users:
         yield user['email']
+
+
+def get_name_users(login, user_id=None):
+    """
+    Retorna los nombres de todos los usuarios
+    o el de la ID que se le pase
+    """
+    if user_id:
+        users = login['conn'].execute_kw(login['db'],
+                                         login['uid'],
+                                         login['password'],
+                                         'res.users',
+                                         'search_read',
+                                         [[('id', '=',
+                                            user_id)]],
+                                         {'fields': ['email']})
+    else:
+        users = login['conn'].execute_kw(login['db'],
+                                         login['uid'],
+                                         login['password'],
+                                         'res.users',
+                                         'search_read',
+                                         [],
+                                         {'fields': ['display_name']})
+    for user in users:
+        yield user['display_name']
 
 
 def send_mail(mail_to, subject, message, file_name, file_data):
