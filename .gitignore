@@ -1,3 +1,4 @@
 .env
 /venv
 odoocli.conf
+mail_tpt.txt
