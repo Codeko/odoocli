@@ -1,5 +1,11 @@
+SUBJECT: This is the (optional) subject
+
+        'user name': ${user_name}
+        'user email': ${user_email}
         'year': ${year}
         'month': ${month}
+        'month name': ${month_name}
         'filename': ${filename}
         'summary': ${summary}
         'csv_table': ${csv_table}
+

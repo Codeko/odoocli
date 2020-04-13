@@ -147,7 +147,11 @@ def mail_report(login, month=None, year=None):
         os.path.realpath(__file__)) + '/mail_tpt.txt'
     if Path(mail_tpt_file).is_file():
         with open(mail_tpt_file) as f:
-            mail_tpt = f.read()
+            mail_lines = f.readlines()
+            if mail_lines[0][0:9] == "SUBJECT: ":
+                subject = mail_lines[0][9:].rstrip()
+                mail_lines.remove(mail_lines[0])
+            mail_tpt = ''.join(mail_lines)
     terms = {
         'user_name': user_name,
         'user_email': mail_to,

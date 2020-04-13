@@ -114,3 +114,7 @@ Dispone de las siguientes variables para sustituir:
     Nombre del usaurio
 * ${user_email}
     Email del usaurio
+
+Si la primera línea de la plantilla comienza EXACTAMENTE con la cadena "SUBJECT: "
+(hay un espacio tras los dos puntos) el resto de la línea se usará como asunto
+para el correo elecrónico.
