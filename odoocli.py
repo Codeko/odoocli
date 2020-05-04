@@ -135,7 +135,7 @@ def mail_report(login, month=None, year=None):
         mail_to = login['user_email']
     else:
         mail_to = tuple(get_mail_users(login, login['uid']))[0]
-    user_name = tuple(get_name_users(login, login['uid']))[0]
+    user_name = tuple(get_name_users(login, get_user_by_email(login)))[0]
     name = "asistencia{}-{}.csv".format(year, month)
     file_name = filename(login, name)
     summary = resume_to_string(login, month, year)
