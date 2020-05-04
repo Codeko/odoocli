@@ -141,7 +141,7 @@ def mail_report(login, month=None, year=None):
     summary = resume_to_string(login, month, year)
     csv_table = list_to_csv_string(login, month, year)
     file_content = summary + csv_table
-    subject = "Informe asistencia {} {}".format(mes(month), year)
+    subject_tpt = "Informe asistencia {} {}".format(mes(month), year)
     mail_tpt = ''
     mail_tpt_file = os.path.dirname(
         os.path.realpath(__file__)) + '/mail_tpt.txt'
