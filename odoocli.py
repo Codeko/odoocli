@@ -26,7 +26,7 @@ from dotenv import load_dotenv
 labor_hours_by_day = 7.0
 
 
-def show_resume_now(login):
+def show_resume_now(login, month=None, year=None):
     """
     Informe del mes corriente:
     """
@@ -619,7 +619,7 @@ def bulk(login, mails, function, *argus):
     for user in mails:
         new_login_data = dict(login)
         new_login_data['user_email'] = user
-        if count_worked_hours(new_login_data):
+        if count_worked_hours(new_login_data, argus[-2], argus[-1]):
             print('Procesando', user)
             function(new_login_data, *argus)
         else:

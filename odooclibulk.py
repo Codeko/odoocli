@@ -115,23 +115,14 @@ else:
 current_month, current_year = odoocli.get_args_date(args.month, args.year)
 
 if args.file:
-    if args.month:
-        odoocli.bulk(login_data, mails, odoocli.list_to_csv, args.file,
-                     current_month, current_year)
-    else:
-        odoocli.bulk(login_data, mails, odoocli.list_to_csv, args.file)
+    odoocli.bulk(login_data, mails, odoocli.list_to_csv, args.file,
+                 current_month, current_year)
 elif args.send:
-    if args.month:
-        odoocli.bulk(login_data, mails, odoocli.mail_report, current_month,
-                     current_year)
-    else:
-        odoocli.bulk(login_data, mails, odoocli.mail_report)
+    odoocli.bulk(login_data, mails, odoocli.mail_report, current_month,
+                 current_year)
 elif args.list:
-    if args.month:
-        odoocli.bulk(login_data, mails, odoocli.list_to_screen, current_month,
-                     current_year)
-    else:
-        odoocli.bulk(login_data, mails, odoocli.list_to_screen)
+    odoocli.bulk(login_data, mails, odoocli.list_to_screen, current_month,
+                 current_year)
 else:
     if args.month:
         if args.accumulated:
@@ -142,6 +133,7 @@ else:
                          current_year)
     else:
         if args.accumulated:
-            odoocli.bulk(login_data, mails, odoocli.year_summary)
+            odoocli.bulk(login_data, mails, odoocli.year_summary, None, None)
         else:
-            odoocli.bulk(login_data, mails, odoocli.show_resume_now)
+            odoocli.bulk(login_data, mails, odoocli.show_resume_now, None,
+                         None)
