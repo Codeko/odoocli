@@ -149,7 +149,7 @@ def mail_report(login, month=None, year=None):
         with open(mail_tpt_file) as f:
             mail_lines = f.readlines()
             if mail_lines[0][0:9] == "SUBJECT: ":
-                subject = mail_lines[0][9:].rstrip()
+                subject_tpt = mail_lines[0][9:].rstrip()
                 mail_lines.remove(mail_lines[0])
             mail_tpt = ''.join(mail_lines)
     terms = {
@@ -163,6 +163,7 @@ def mail_report(login, month=None, year=None):
         'csv_table': csv_table
     }
     body_text = Template(mail_tpt).safe_substitute(terms)
+    subject = Template(subject_tpt).safe_substitute(terms)
     send_mail(mail_to, subject, body_text, file_name, file_content)
 
 
