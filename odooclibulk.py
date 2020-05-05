@@ -114,8 +114,13 @@ else:
 current_month, current_year = odoocli.get_args_date(args.month, args.year)
 
 if args.file:
-    odoocli.bulk(login_data, mails, odoocli.list_to_csv, args.file,
-                 current_month, current_year)
+    if args.accumulated:
+        odoocli.bulk(login_data, mails, odoocli.accumulated_list_to_csv,
+                     args.file,
+                     current_month, current_year)
+    else:
+        odoocli.bulk(login_data, mails, odoocli.list_to_csv, args.file,
+                     current_month, current_year)
 elif args.send:
     if args.accumulated:
         odoocli.bulk(login_data, mails, odoocli.mail_report_accumulated,

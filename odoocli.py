@@ -796,10 +796,11 @@ mostrará un prompt solicitando la contraseña.
     current_month, current_year = get_args_date(args.month, args.year)
 
     if args.file:
-        if args.month:
-            list_to_csv(login_data, args.file, current_month, current_year)
+        if args.accumulated:
+            accumulated_list_to_csv(login_data, args.file, current_month,
+                                    current_year)
         else:
-            list_to_csv(login_data, args.file)
+            list_to_csv(login_data, args.file, current_month, current_year)
     elif args.list:
         if args.month:
             list_to_screen(login_data, current_month, current_year)
