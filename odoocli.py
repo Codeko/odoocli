@@ -74,6 +74,13 @@ def year_summary(login, month=None, year=None):
     """
     resumen desde enero hasta el mes indicado
     """
+    print(accumulated_summary(login, month, year))
+
+
+def accumulated_summary(login, month=None, year=None):
+    """
+    resumen desde enero hasta el mes indicado
+    """
     if year is None:
         year = int(datetime.now().year)
     if month is None:
@@ -85,10 +92,44 @@ def year_summary(login, month=None, year=None):
     for m in range(1, month + 1):
         labor_hours += total_labor_hours(login, m, year)
         worked_hours += count_worked_hours(login, m, year)
-
     response = "Horas laborables:\t{:.2f}\n".format(labor_hours)
     response += "Horas trabajadas:\t{:.2f}\n".format(worked_hours)
-    print(response)
+    return response
+
+
+def accumulated_list_to_csv(login, file_name, month=None, year=None):
+    file_path = filename(login, file_name)
+
+    summary = resume_to_string(login, month, year)
+    csv_string = accumulated_list_to_csv_string(login, month, year)
+    with codecs.open(file_path, 'w', 'utf-8') as out:
+        print(summary, file=out)
+        print(csv_string, file=out)
+
+
+def accumulated_list_to_csv_string(login, month=None, year=None):
+    """
+    listado desde enero hasta el mes indicado
+    """
+    if year is None:
+        year = int(datetime.now().year)
+    if month is None:
+        month = int(datetime.now().month)
+
+    mem_file = io.StringIO()
+    csv_writer = csv.writer(mem_file, delimiter=',', quotechar='"')
+    csv_writer.writerow(('entrada', 'salida', 'horas'))
+
+    for m in range(1, month + 1):
+        for line in get_user_attendance_by_month(login, m, year):
+            tentry = tlocal(line[0], 'DT')
+            texit = tlocal(line[1], 'DT')
+            if line[1]:
+                hours = line[2]
+            else:
+                hours = open_session_worked_hours(login)
+            csv_writer.writerow((tentry, texit, '{:.2f}'.format(hours)))
+    return mem_file.getvalue()
 
 
 def list_to_csv(login, file_name, month=None, year=None):
@@ -125,7 +166,15 @@ def filename(login, path):
     return file_path
 
 
-def mail_report(login, month=None, year=None):
+def mail_report_accumulated(login, month=None, year=None):
+    mail_report(login, 'accumulated', month, year)
+
+
+def mail_report_list(login, month=None, year=None):
+    mail_report(login, 'list', month, year)
+
+
+def mail_report(login, mode='list', month=None, year=None):
 
     if year is None:
         year = int(datetime.now().year)
@@ -138,8 +187,14 @@ def mail_report(login, month=None, year=None):
     user_name = tuple(get_name_users(login, get_user_by_email(login)))[0]
     name = "asistencia{}-{}.csv".format(year, month)
     file_name = filename(login, name)
-    summary = resume_to_string(login, month, year)
-    csv_table = list_to_csv_string(login, month, year)
+
+    if mode == 'accumulated':
+        summary = accumulated_summary(login, month, year)
+        csv_table = accumulated_list_to_csv_string(login, month, year)
+    else:
+        summary = resume_to_string(login, month, year)
+        csv_table = list_to_csv_string(login, month, year)
+
     file_content = summary + csv_table
     subject_tpt = "Informe asistencia {} {}".format(mes(month), year)
     mail_tpt = ''

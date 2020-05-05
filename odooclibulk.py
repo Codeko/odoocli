@@ -106,7 +106,6 @@ if uid:
 else:
     sys.exit('Error en el Login')
 
-
 if args.email:
     mails = args.email
 else:
@@ -118,8 +117,14 @@ if args.file:
     odoocli.bulk(login_data, mails, odoocli.list_to_csv, args.file,
                  current_month, current_year)
 elif args.send:
-    odoocli.bulk(login_data, mails, odoocli.mail_report, current_month,
-                 current_year)
+    if args.accumulated:
+        odoocli.bulk(login_data, mails, odoocli.mail_report_accumulated,
+                     current_month,
+                     current_year)
+    else:
+        odoocli.bulk(login_data, mails, odoocli.mail_report_list,
+                     current_month,
+                     current_year)
 elif args.list:
     odoocli.bulk(login_data, mails, odoocli.list_to_screen, current_month,
                  current_year)
