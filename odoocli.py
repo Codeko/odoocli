@@ -61,7 +61,8 @@ def resume_to_string(login, month=None, year=None):
     if month is None:
         month = int(datetime.now().month)
 
-    response = "Días laborables:\t{}\n".format(
+    response = "Resumen {} {}:\n".format(mes(month), year)
+    response += "Días laborables:\t{}\n".format(
         count_labour_days(login, month, year))
     response += "Horas laborables:\t{:.2f}\n".format(
         total_labor_hours(login, month, year))
@@ -92,7 +93,8 @@ def accumulated_summary(login, month=None, year=None):
     for m in range(1, month + 1):
         labor_hours += total_labor_hours(login, m, year)
         worked_hours += count_worked_hours(login, m, year)
-    response = "Horas laborables:\t{:.2f}\n".format(labor_hours)
+    response = 'Acumulado {} - {} {}:\n'.format(mes(1), mes(month), year)
+    response += "Horas laborables:\t{:.2f}\n".format(labor_hours)
     response += "Horas trabajadas:\t{:.2f}\n".format(worked_hours)
     return response
 
@@ -189,7 +191,9 @@ def mail_report(login, mode='list', month=None, year=None):
     file_name = filename(login, name)
 
     if mode == 'accumulated':
-        summary = accumulated_summary(login, month, year)
+        past_summary = accumulated_summary(login, month - 1, year)
+        current_summary = resume_to_string(login, month, year)
+        summary = '{}\n\n{}'.format(current_summary, past_summary)
         csv_table = accumulated_list_to_csv_string(login, month, year)
     else:
         summary = resume_to_string(login, month, year)
