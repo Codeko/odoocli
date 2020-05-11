@@ -30,6 +30,11 @@ def show_resume_now(login, month=None, year=None):
     """
     Informe del mes corriente:
     """
+    if year is None:
+        year = int(datetime.now().year)
+    if month is None:
+        month = int(datetime.now().month)
+    print("Resumen {} {}:".format(mes(month), year))
     print("Días laborables de este mes:\t{}".format(
         count_labour_days(login)))
     print("Horas laborables de este mes:\t{:.2f}".format(
@@ -75,7 +80,20 @@ def year_summary(login, month=None, year=None):
     """
     resumen desde enero hasta el mes indicado
     """
-    print(accumulated_summary(login, month, year))
+
+    if year is None:
+        year = int(datetime.now().year)
+    if month is None:
+        month = int(datetime.now().month)
+
+    prev_mont = month - 1
+    prev_year = year
+    if prev_mont == 0:
+        prev_mont = 12
+        prev_year -= 1
+
+    show_resume_now(login)
+    print(accumulated_summary(login, prev_mont, prev_year))
 
 
 def accumulated_summary(login, month=None, year=None):
@@ -191,7 +209,12 @@ def mail_report(login, mode='list', month=None, year=None):
     file_name = filename(login, name)
 
     if mode == 'accumulated':
-        past_summary = accumulated_summary(login, month - 1, year)
+        prev_mont = month - 1
+        prev_year = year
+        if prev_mont == 0:
+            prev_mont = 12
+            prev_year -= 1
+        past_summary = accumulated_summary(login, prev_mont, prev_year)
         current_summary = resume_to_string(login, month, year)
         summary = '{}\n\n{}'.format(current_summary, past_summary)
         csv_table = accumulated_list_to_csv_string(login, month, year)
