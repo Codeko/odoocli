@@ -34,15 +34,21 @@ def show_resume_now(login, month=None, year=None):
         year = int(datetime.now().year)
     if month is None:
         month = int(datetime.now().month)
+
+    w_hours = count_worked_hours(login)
+    l_hours = labor_hours_until_today(login)
+
     print("Resumen {} {}:".format(mes(month), year))
     print("Días laborables de este mes:\t{}".format(
         count_labour_days(login)))
     print("Horas laborables de este mes:\t{:.2f}".format(
         total_labor_hours(login)))
     print('Horas laborables hasta hoy:\t{:.2f}'.format(
-        labor_hours_until_today(login)))
+        l_hours))
     print('Horas trabajadas hasta ahora:\t{:.2f}'.format(
-        count_worked_hours(login)))
+        w_hours))
+    print('Horas de diferencia:\t{:.2f}'.format(
+        w_hours - l_hours))
 
 
 def show_resume(login, month=None, year=None):
@@ -66,13 +72,15 @@ def resume_to_string(login, month=None, year=None):
     if month is None:
         month = int(datetime.now().month)
 
+    w_hours = count_worked_hours(login, month, year)
+    l_hours = total_labor_hours(login, month, year)
+
     response = "Resumen {} {}:\n".format(mes(month), year)
     response += "Días laborables:\t{}\n".format(
         count_labour_days(login, month, year))
-    response += "Horas laborables:\t{:.2f}\n".format(
-        total_labor_hours(login, month, year))
-    response += "Horas trabajadas:\t{:.2f}\n".format(
-        count_worked_hours(login, month, year))
+    response += "Horas laborables:\t{:.2f}\n".format(l_hours)
+    response += "Horas trabajadas:\t{:.2f}\n".format(w_hours)
+    response += "Horas de diferencia:\t{:.2f}\n".format(w_hours - l_hours)
     return response
 
 
@@ -92,7 +100,8 @@ def year_summary(login, month=None, year=None):
         prev_mont = 12
         prev_year -= 1
 
-    show_resume_now(login)
+    show_resume_now(login, month, year)
+    print('\n')
     print(accumulated_summary(login, prev_mont, prev_year))
 
 
@@ -114,6 +123,8 @@ def accumulated_summary(login, month=None, year=None):
     response = 'Acumulado {} - {} {}:\n'.format(mes(1), mes(month), year)
     response += "Horas laborables:\t{:.2f}\n".format(labor_hours)
     response += "Horas trabajadas:\t{:.2f}\n".format(worked_hours)
+    response += "Horas de diferencia:\t{:.2f}\n".format(
+        worked_hours - labor_hours)
     return response
 
 
