@@ -26,6 +26,36 @@ from dotenv import load_dotenv
 labor_hours_by_day = 7.0
 
 
+def memoize(func):
+    func_name = func.__name__
+    data = {}
+
+    def wrappeada(login, month=None, year=None):
+
+        if year is None:
+            year = int(datetime.now().year)
+        if month is None:
+            month = int(datetime.now().month)
+
+        if 'user_email' in login:
+            user = login['user_email']
+        else:
+            user = login['username']
+
+        dict_key = "{}-{}-{}-{}".format(func_name,
+                                        user,
+                                        month,
+                                        year)
+
+        if dict_key in data:
+            return data[dict_key]
+        else:
+            data[dict_key] = list(func(login, month, year))
+            return data[dict_key]
+
+    return wrappeada
+
+
 def show_resume_now(login, month=None, year=None):
     """
     Informe del mes corriente:
@@ -314,6 +344,7 @@ def get_holiday(login, id_holiday):
     return holidays[0]
 
 
+@memoize
 def holidays_by_month(login, month=None, year=None):
     """
     Listado de festivos
@@ -344,6 +375,7 @@ def weekend_days_by_month(month=None, year=None):
             yield "{}-{:02d}-{:02d}".format(year, month, day)
 
 
+@memoize
 def get_vacances_by_month(login, month=None, year=None):
     """
     Listado de días de vaciones
@@ -398,6 +430,7 @@ def not_working_by_month(login, month=None, year=None):
 #
 ########################################################################
 
+@memoize
 def get_user_attendance_by_month(login, month=None, year=None):
     user_id = get_user_id(login)
     if year is None:
