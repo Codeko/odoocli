@@ -42,10 +42,7 @@ def memoize(func):
         else:
             user = login['username']
 
-        dict_key = "{}-{}-{}-{}".format(func_name,
-                                        user,
-                                        month,
-                                        year)
+        dict_key = "{}-{}-{}-{}".format(func_name, user, month, year)
 
         if dict_key in data:
             return data[dict_key]
@@ -156,6 +153,11 @@ def accumulated_summary(login, month=None, year=None):
     response += "Horas de diferencia:\t{:.2f}\n".format(
         worked_hours - labor_hours)
     return response
+
+
+def show_today_summary(login):
+    l_hours = count_worked_hours_today(login)
+    print("Horas trabajadas hoy:\t{:.2f}\n".format(l_hours))
 
 
 def accumulated_list_to_csv(login, file_name, month=None, year=None):
@@ -512,6 +514,18 @@ def count_worked_hours(login, month=None, year=None):
     return total
 
 
+def count_worked_hours_today(login):
+    """
+    Horas trabajadas hoy (se cuentan las de las sesión abierta)
+    """
+    today = datetime.now().strftime('%Y-%m-%d')
+    total = open_session_worked_hours(login)
+    for e in get_user_attendance_by_month(login):
+        if e[1] and e[1][0:10] == today:
+            total += e[2]
+    return total
+
+
 def open_session_worked_hours(login):
     """
     Horas trasncurridas desde la última sesión abierta y no cerrada
@@ -838,6 +852,8 @@ mostrará un prompt solicitando la contraseña.
     parser.add_argument('-a', '--accumulated', action='count',
                         help='Muestra un resumen de todos los meses desde \
                         enero en lugar del resumen habitual')
+    parser.add_argument('-t', '--today', action='count',
+                        help='Muestra las horas trabajadas hoy.')
     args = parser.parse_args()
 
     if args.user:
@@ -866,7 +882,9 @@ mostrará un prompt solicitando la contraseña.
 
     current_month, current_year = get_args_date(args.month, args.year)
 
-    if args.file:
+    if args.today:
+        show_today_summary(login_data)
+    elif args.file:
         if args.accumulated:
             accumulated_list_to_csv(login_data, args.file, current_month,
                                     current_year)
