@@ -320,8 +320,9 @@ def list_to_screen(login, month=None, year=None):
 
 def public_holidays(login, year):
     """
-    Festivos de un año
+    Festivos de un año nacionales y provinciales
     """
+    user_city = get_state_by_address(login, get_address_id_employee(login))
     holidays = login['conn'].execute_kw(
         login['db'],
         login['uid'],
@@ -331,7 +332,9 @@ def public_holidays(login, year):
         [[('year', '=', year)]],
         {'fields': ['line_ids']})
     for i in holidays[0]['line_ids']:
-        yield get_holiday(login, i)
+        hly = get_holiday(login, i)
+        if not hly["state_ids"] or user_city in hly["state_ids"]:
+            yield get_holiday(login, i)
 
 
 def get_holiday(login, id_holiday):
@@ -654,6 +657,37 @@ def get_user_by_email(login):
         for user in users:
             return user['id']
     return None
+
+
+def get_state_by_address(login, address_id):
+    """
+    Obtiene el código de provicia (state_id) a partir de un address_id
+    """
+    states = login['conn'].execute_kw(login['db'],
+                                      login['uid'],
+                                      login['password'],
+                                      'res.partner',
+                                      'search_read',
+                                      [[('id', '=',
+                                         address_id)]],
+                                      {'fields': ["state_id"]})
+    return states[0]["state_id"][0]
+
+
+def get_address_id_employee(login):
+    """
+    Obtiene el address_id de un empleado
+    """
+    user_id = get_user_id(login)
+    addresses = login['conn'].execute_kw(login['db'],
+                                         login['uid'],
+                                         login['password'],
+                                         'hr.employee',
+                                         'search_read',
+                                         [[('id', '=',
+                                            user_id)]],
+                                         {'fields': ["address_id"]})
+    return addresses[0]['address_id'][0]
 
 
 def get_mail_users(login, user_id=None):
