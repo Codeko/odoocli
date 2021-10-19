@@ -912,7 +912,10 @@ mostrará un prompt solicitando la contraseña.
         password = getpass.getpass()
 
     common = xmlrpc.client.ServerProxy('{}/xmlrpc/2/common'.format(server))
-    uid = common.authenticate(db, username, password, {})
+    try:
+        uid = common.authenticate(db, username, password, {})
+    except TimeoutError:
+        sys.exit("Error en el Timeout")
 
     if uid:
         login_data = {'db': db, 'password': password, 'username': username,
