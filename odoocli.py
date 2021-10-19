@@ -68,14 +68,14 @@ def show_resume_now(login, month=None, year=None):
     print("Resumen {} {}:".format(mes(month), year))
     print("Días laborables de este mes:\t{}".format(
         count_labour_days(login)))
-    print("Horas laborables de este mes:\t{:.2f}".format(
-        total_labor_hours(login)))
-    print('Horas laborables hasta hoy:\t{:.2f}'.format(
-        l_hours))
-    print('Horas trabajadas hasta ahora:\t{:.2f}'.format(
-        w_hours))
-    print('Horas de diferencia:\t{:.2f}'.format(
-        w_hours - l_hours))
+    print("Horas laborables de este mes:\t{}".format(
+        format_hours(total_labor_hours(login))))
+    print('Horas laborables hasta hoy:\t{}'.format(
+        format_hours(l_hours)))
+    print('Horas trabajadas hasta ahora:\t{}'.format(
+        format_hours(w_hours)))
+    print('Horas de diferencia:\t\t{}'.format(
+        format_hours(w_hours - l_hours)))
 
 
 def show_resume(login, month=None, year=None):
@@ -105,9 +105,10 @@ def resume_to_string(login, month=None, year=None):
     response = "Resumen {} {}:\n".format(mes(month), year)
     response += "Días laborables:\t{}\n".format(
         count_labour_days(login, month, year))
-    response += "Horas laborables:\t{:.2f}\n".format(l_hours)
-    response += "Horas trabajadas:\t{:.2f}\n".format(w_hours)
-    response += "Horas de diferencia:\t{:.2f}\n".format(w_hours - l_hours)
+    response += "Horas laborables:\t{}\n".format(format_hours(l_hours))
+    response += "Horas trabajadas:\t{}\n".format(format_hours(w_hours))
+    response += "Horas de diferencia:\t{}\n".format(
+        format_hours(w_hours - l_hours))
     return response
 
 
@@ -148,16 +149,16 @@ def accumulated_summary(login, month=None, year=None):
         labor_hours += total_labor_hours(login, m, year)
         worked_hours += count_worked_hours(login, m, year)
     response = 'Acumulado {} - {} {}:\n'.format(mes(1), mes(month), year)
-    response += "Horas laborables:\t{:.2f}\n".format(labor_hours)
-    response += "Horas trabajadas:\t{:.2f}\n".format(worked_hours)
-    response += "Horas de diferencia:\t{:.2f}\n".format(
-        worked_hours - labor_hours)
+    response += "Horas laborables:\t{}\n".format(format_hours(labor_hours))
+    response += "Horas trabajadas:\t{}\n".format(format_hours(worked_hours))
+    response += "Horas de diferencia:\t{}\n".format(
+        format_hours(worked_hours - labor_hours))
     return response
 
 
 def show_today_summary(login):
     l_hours = count_worked_hours_today(login)
-    print("Horas trabajadas hoy:\t{:.2f}\n".format(l_hours))
+    print("Horas trabajadas hoy:\t{}\n".format(format_hours(l_hours)))
 
 
 def accumulated_list_to_csv(login, file_name, month=None, year=None):
@@ -191,7 +192,8 @@ def accumulated_list_to_csv_string(login, month=None, year=None):
                 hours = line[2]
             else:
                 hours = open_session_worked_hours(login)
-            csv_writer.writerow((tentry, texit, '{:.2f}'.format(hours)))
+            csv_writer.writerow(
+                (tentry, texit, '{}'.format(format_hours(hours))))
     return mem_file.getvalue()
 
 
@@ -216,7 +218,7 @@ def list_to_csv_string(login, month=None, year=None):
             hours = line[2]
         else:
             hours = open_session_worked_hours(login)
-        csv_writer.writerow((tentry, texit, '{:.2f}'.format(hours)))
+        csv_writer.writerow((tentry, texit, '{}'.format(format_hours(hours))))
     return mem_file.getvalue()
 
 
@@ -238,7 +240,6 @@ def mail_report_list(login, month=None, year=None):
 
 
 def mail_report(login, mode='list', month=None, year=None):
-
     if year is None:
         year = int(datetime.now().year)
     if month is None:
@@ -298,17 +299,17 @@ def list_to_screen(login, month=None, year=None):
     for line in get_user_attendance_by_month(login, month, year):
 
         if line[1]:
-            print('{} | {} | {} | {:.2f}'.format(
+            print('{} | {} | {} | {}'.format(
                 tlocal(line[0], 'D'),
                 tlocal(line[0], 'T'),
                 tlocal(line[1], 'T'),
-                line[2]))
+                format_hours(line[2])))
         else:
-            print('{} | {} | {} | {:.2f}'.format(
+            print('{} | {} | {} | {}'.format(
                 tlocal(line[0], 'D'),
                 tlocal(line[0], 'T'),
                 tlocal(line[1], 'T'),
-                open_session_worked_hours(login)))
+                format_hours(open_session_worked_hours(login))))
 
 
 ########################################################################
@@ -596,6 +597,14 @@ def mes(month):
             'Diciembre')[month - 1]
 
 
+def format_hours(time_decimal):
+    sign = '-' if float(time_decimal) < 0 else ' '
+    h = int(abs(time_decimal))
+    m = int((abs(time_decimal) * 60) % 60)
+    s = int((abs(time_decimal) * 3600) % 60)
+    return "{}{:02}:{:02}:{:02}".format(sign, h, m, s)
+
+
 def get_args_date(month, year):
     if month:
         new_month, new_year = month, year
@@ -787,7 +796,6 @@ def send_mail(mail_to, subject, message, file_name, file_data):
 
 
 def bulk(login, mails, function, *argus):
-
     if not mails:
         mails = get_mail_users(login)
 
@@ -838,7 +846,7 @@ Si se indica un mes concreto con la opción --month, se mostrará el resumen
 total de ese mes. Se puede concretar el año con la opción --year.
 
 --month admite números negativos. En ese caso, el número se restará del
-mes actual, de modo que "-m -1" mostrará el mes anterior al corriente. 
+mes actual, de modo que "-m -1" mostrará el mes anterior al corriente.
 
 Si se usa el flag --list se mostrará un listado de asistencias en lugar del
 resumen.
