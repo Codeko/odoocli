@@ -62,21 +62,28 @@ def show_resume_now(login, month=None, year=None):
 
     w_hours = count_worked_hours(login)
 
-    dict_labor_hours_this_month = labor_hours_by_month_day(login, month, year)
+    working_hours_to_today = get_mountly_hours_from_calendar_name(login)
 
-    today = datetime.now().strftime('%Y-%m-%d')
+    if working_hours_to_today:
+        working_days_total = "--"
+        working_hours_total = working_hours_to_today
 
-    working_days_total = 0
-    working_hours_total = 0
-    working_days_to_today = 0
-    working_hours_to_today = 0
-    for day, hours in dict_labor_hours_this_month.items():
-        if hours > 0:
-            working_days_total += 1
-            working_hours_total += hours
-            if day <= today:
-                working_days_to_today += 1
-                working_hours_to_today += hours
+    else:
+        dict_labor_hours_this_month = labor_hours_by_month_day(login, month, year)
+
+        today = datetime.now().strftime('%Y-%m-%d')
+
+        working_days_total = 0
+        working_hours_total = 0
+        working_days_to_today = 0
+        working_hours_to_today = 0
+        for day, hours in dict_labor_hours_this_month.items():
+            if hours > 0:
+                working_days_total += 1
+                working_hours_total += hours
+                if day <= today:
+                    working_days_to_today += 1
+                    working_hours_to_today += hours
 
     print("Resumen {} {}:".format(mes(month), year))
     print("Días laborables de este mes:\t{}".format(
@@ -114,15 +121,21 @@ def resume_to_string(login, month=None, year=None):
 
     w_hours = count_worked_hours(login, month, year)
 
-    dict_labor_hours_this_month = labor_hours_by_month_day(login, month, year)
+    working_hours_total = get_mountly_hours_from_calendar_name(login)
 
-    working_hours_total = 0
-    working_days_total = 0
+    if working_hours_total:
+        working_days_total = "--"
 
-    for day, hours in dict_labor_hours_this_month.items():
-        if hours > 0:
-            working_hours_total += hours
-            working_days_total += 1
+    else:
+        dict_labor_hours_this_month = labor_hours_by_month_day(login, month, year)
+
+        working_hours_total = 0
+        working_days_total = 0
+
+        for day, hours in dict_labor_hours_this_month.items():
+            if hours > 0:
+                working_hours_total += hours
+                working_days_total += 1
 
     response = "Resumen {} {}:\n".format(mes(month), year)
     response += "Días laborables:\t{}\n".format(working_days_total)
@@ -773,23 +786,49 @@ def get_horario_id_employee(login):
     """
     user_id = get_user_id(login)
     calendar = login['conn'].execute_kw(login['db'],
-                                         login['uid'],
-                                         login['password'],
-                                         'hr.employee',
-                                         'search_read',
-                                         [[('id', '=',
-                                            user_id)]],
-                                         {'fields': ['calendar_id']})
+                                        login['uid'],
+                                        login['password'],
+                                        'hr.employee',
+                                        'search_read',
+                                        [[('id', '=',
+                                           user_id)]],
+                                        {'fields': ['calendar_id']})
 
     if calendar[0]['calendar_id']:
         return calendar[0]['calendar_id'][0]
     else:
-        return False
+        return None
+
+
+def get_mountly_hours_from_calendar_name(login):
+    """
+    Retorna las horas mensuales, si el nombre delo horario las menciona
+    """
+    user_id = get_user_id(login)
+    hours = None
+    calendar = login['conn'].execute_kw(login['db'],
+                                        login['uid'],
+                                        login['password'],
+                                        'hr.employee',
+                                        'search_read',
+                                        [[('id', '=',
+                                           user_id)]],
+                                        {'fields': ['calendar_id']})
+
+    if calendar[0]['calendar_id']:
+        calendar_name = calendar[0]['calendar_id'][-1]
+        cachos = calendar_name.split()
+        if len(cachos) > 1 and (cachos[1].lower() == "mensual" or cachos[1].lower() == "mensuales"):
+            try:
+                hours = float(cachos[0])
+            except ValueError:
+                pass
+    return hours
 
 
 def get_jornada(login):
     """
-    Retorna una lista con las IDs de las horas diarías del horario del trabajador
+    Retorna una lista con las IDs de las horas diarias del horario del trabajador
     Necesita permisos
     """
 
