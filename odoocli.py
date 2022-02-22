@@ -23,8 +23,6 @@ from string import Template
 
 from dotenv import load_dotenv
 
-labor_hours_by_day = 7.0
-
 
 def memoize(func):
     func_name = func.__name__
@@ -63,19 +61,34 @@ def show_resume_now(login, month=None, year=None):
         month = int(datetime.now().month)
 
     w_hours = count_worked_hours(login)
-    l_hours = labor_hours_until_today(login)
+
+    dict_labor_hours_this_month = labor_hours_by_month_day(login, month, year)
+
+    today = datetime.now().strftime('%Y-%m-%d')
+
+    working_days_total = 0
+    working_hours_total = 0
+    working_days_to_today = 0
+    working_hours_to_today = 0
+    for day, hours in dict_labor_hours_this_month.items():
+        if hours > 0:
+            working_days_total += 1
+            working_hours_total += hours
+            if day <= today:
+                working_days_to_today += 1
+                working_hours_to_today += hours
 
     print("Resumen {} {}:".format(mes(month), year))
     print("Días laborables de este mes:\t{}".format(
-        count_labour_days(login)))
+        working_days_total))
     print("Horas laborables de este mes:\t{}".format(
-        format_hours(total_labor_hours(login))))
+        format_hours(working_hours_total)))
     print('Horas laborables hasta hoy:\t{}'.format(
-        format_hours(l_hours)))
+        format_hours(working_hours_to_today)))
     print('Horas trabajadas hasta ahora:\t{}'.format(
         format_hours(w_hours)))
     print('Horas de diferencia:\t\t{}'.format(
-        format_hours(w_hours - l_hours)))
+        format_hours(w_hours - working_hours_to_today)))
 
 
 def show_resume(login, month=None, year=None):
@@ -100,15 +113,23 @@ def resume_to_string(login, month=None, year=None):
         month = int(datetime.now().month)
 
     w_hours = count_worked_hours(login, month, year)
-    l_hours = total_labor_hours(login, month, year)
+
+    dict_labor_hours_this_month = labor_hours_by_month_day(login, month, year)
+
+    working_hours_total = 0
+    working_days_total = 0
+
+    for day, hours in dict_labor_hours_this_month.items():
+        if hours > 0:
+            working_hours_total += hours
+            working_days_total += 1
 
     response = "Resumen {} {}:\n".format(mes(month), year)
-    response += "Días laborables:\t{}\n".format(
-        count_labour_days(login, month, year))
-    response += "Horas laborables:\t{}\n".format(format_hours(l_hours))
+    response += "Días laborables:\t{}\n".format(working_days_total)
+    response += "Horas laborables:\t{}\n".format(format_hours(working_hours_total))
     response += "Horas trabajadas:\t{}\n".format(format_hours(w_hours))
     response += "Horas de diferencia:\t{}\n".format(
-        format_hours(w_hours - l_hours))
+        format_hours(w_hours - working_hours_total))
     return response
 
 
@@ -146,8 +167,9 @@ def accumulated_summary(login, month=None, year=None):
     worked_hours = 0
 
     for m in range(1, month + 1):
-        labor_hours += total_labor_hours(login, m, year)
+        labor_hours += sum(labor_hours_by_month_day(login, m, year).values())
         worked_hours += count_worked_hours(login, m, year)
+
     response = 'Acumulado {} - {} {}:\n'.format(mes(1), mes(month), year)
     response += "Horas laborables:\t{}\n".format(format_hours(labor_hours))
     response += "Horas trabajadas:\t{}\n".format(format_hours(worked_hours))
@@ -364,27 +386,10 @@ def holidays_by_month(login, month=None, year=None):
             yield day['date']
 
 
-def weekend_days_by_month(month=None, year=None):
-    """
-    Listado de días correspondientes a fin de semana
-    """
-    if year is None:
-        year = int(datetime.now().year)
-    if month is None:
-        month = int(datetime.now().month)
-    cal = calendar.Calendar()
-    day_list = list(cal.itermonthdays(year, month))
-    weekend = day_list[5::7] + day_list[6::7]
-    weekend.sort()
-    for day in weekend:
-        if day != 0:
-            yield "{}-{:02d}-{:02d}".format(year, month, day)
-
-
 @memoize
 def get_vacances_by_month(login, month=None, year=None):
     """
-    Listado de días de vaciones
+    Listado de días de vacaciones
     """
     user_id = get_user_id(login)
     if year is None:
@@ -417,19 +422,6 @@ def get_vacances_by_month(login, month=None, year=None):
                                                             day.day)
 
 
-def not_working_by_month(login, month=None, year=None):
-    """
-    Listado de días no laborables de un mes
-    (fiestas + vacaciones + fines de semana)
-    """
-    not_working = list(set(list(weekend_days_by_month(month, year)) +
-                           list(holidays_by_month(login, month, year)) +
-                           list(get_vacances_by_month(login, month, year))))
-    not_working.sort()
-    for day in not_working:
-        yield day
-
-
 ########################################################################
 #
 # Work
@@ -460,46 +452,6 @@ def get_user_attendance_by_month(login, month=None, year=None):
     else:
         for e in attendance:
             yield e['check_in'], e['check_out'], e['worked_hours']
-
-
-def count_labour_days(login, month=None, year=None):
-    """
-    Número de días laborables de un mes
-    """
-    if year is None:
-        year = int(datetime.now().year)
-    if month is None:
-        month = int(datetime.now().month)
-    return calendar.monthrange(year, month)[1] - len(
-        list(not_working_by_month(login, month, year)))
-
-
-def count_labour_days_until_today(login):
-    """
-    Número de días laborables transcurridos hasta hoy
-    """
-    days = int(datetime.now().day)
-    today = datetime.now().strftime('%Y-%m-%d')
-
-    not_working = 0
-    for day in not_working_by_month(login):
-        if day <= today:
-            not_working += 1
-    return days - not_working
-
-
-def labor_hours_until_today(login):
-    """
-    Horas laborables transcurridas hasta hoy
-    """
-    return labor_hours_by_day * count_labour_days_until_today(login)
-
-
-def total_labor_hours(login, month=None, year=None):
-    """
-    Horas laborables totales de un mes
-    """
-    return labor_hours_by_day * count_labour_days(login, month, year)
 
 
 def count_worked_hours(login, month=None, year=None):
@@ -807,6 +759,113 @@ def bulk(login, mails, function, *argus):
             function(new_login_data, *argus)
         else:
             print('Se omite', user)
+
+
+##################################################
+#
+# Todas estas funciones son para sacar el horario semanal
+#
+##################################################
+
+def get_horario_id_employee(login):
+    """
+    Retrona la ID del horario del trabajador
+    """
+    user_id = get_user_id(login)
+    calendar = login['conn'].execute_kw(login['db'],
+                                         login['uid'],
+                                         login['password'],
+                                         'hr.employee',
+                                         'search_read',
+                                         [[('id', '=',
+                                            user_id)]],
+                                         {'fields': ['calendar_id']})
+
+    if calendar[0]['calendar_id']:
+        return calendar[0]['calendar_id'][0]
+    else:
+        return False
+
+
+def get_jornada(login):
+    """
+    Retorna una lista con las IDs de las horas diarías del horario del trabajador
+    Necesita permisos
+    """
+
+    horario_id = get_horario_id_employee(login)
+
+    if horario_id:
+        resp = login['conn'].execute_kw(
+            login['db'],
+            login['uid'],
+            login['password'],
+            'resource.calendar',
+            'search_read',
+            [[('id', '=',
+               horario_id)]],
+            {'fields': ['attendance_ids']})
+
+        return resp[0]['attendance_ids']
+
+    return None
+
+
+def get_week_labor_hours(login):
+    """
+    Retorna una lista con las horas laborables de cada día de la semana.
+    Lunes es el cero, domingo el seis
+    Necesita permisos
+    """
+    lista_ids = get_jornada(login)
+
+    horario_semana = [0] * 7
+
+    if lista_ids:
+        resp = login['conn'].execute_kw(
+            login['db'],
+            login['uid'],
+            login['password'],
+            'resource.calendar.attendance',
+            'search_read',
+            [[('id', 'in',
+               lista_ids)]],
+            {'fields': ['dayofweek', 'hour_from', 'hour_to']})
+
+        for day in resp:
+            horario_semana[int(day['dayofweek'])] = float(day['hour_to']) - float(day['hour_from'])
+
+    return horario_semana
+
+
+def labor_hours_by_month_day(login, month=None, year=None):
+    """
+    Retorna un diccionario con las horas laborables de cada día del mes.
+    {"2022-02-01": 8.0, ...}
+    Necesita permisos
+    """
+    if year is None:
+        year = int(datetime.now().year)
+    if month is None:
+        month = int(datetime.now().month)
+
+    week_labor_hours = get_week_labor_hours(login)
+
+    holidays = tuple(holidays_by_month(login, month, year))
+    vacations = tuple(get_vacances_by_month(login, month, year))
+
+    labor_hours_by_day = {}
+    cal = calendar.Calendar()
+    weekday = 0
+    for day in cal.itermonthdays(year, month):
+        if day != 0:
+            key = "{}-{:02d}-{:02d}".format(year, month, day)
+            if key not in holidays and key not in vacations:
+                labor_hours_by_day["{}-{:02d}-{:02d}".format(year, month, day)] = week_labor_hours[weekday]
+        weekday += 1
+        if weekday == 7:
+            weekday = 0
+    return labor_hours_by_day
 
 
 ########################################################################
