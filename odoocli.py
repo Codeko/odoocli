@@ -60,15 +60,25 @@ def show_resume_now(login, month=None, year=None):
     if month is None:
         month = int(datetime.now().month)
 
-    w_hours = count_worked_hours(login)
-
     working_hours_to_today = get_mountly_hours_from_calendar_name(login)
 
     if working_hours_to_today:
+        # En lugar de horario, lo que tiene es un número de horas mensuales
         working_days_total = "--"
         working_hours_total = working_hours_to_today
+        w_hours = count_worked_hours(login)
 
     else:
+        working_hours_to_today = get_total_hours_from_calendar_name(login)
+        # En este if haría falta un walrus
+        if working_hours_to_today:
+            # En lugar de horario, lo que tiene es un número de horas totales
+            working_days_total = "--"
+            working_hours_total = working_hours_to_today
+            w_hours = count_worked_hours_on_life(login)
+
+    if not working_hours_to_today:
+        w_hours = count_worked_hours(login)
         dict_labor_hours_this_month = labor_hours_by_month_day(login, month, year)
 
         today = datetime.now().strftime('%Y-%m-%d')
@@ -119,14 +129,22 @@ def resume_to_string(login, month=None, year=None):
     if month is None:
         month = int(datetime.now().month)
 
-    w_hours = count_worked_hours(login, month, year)
-
     working_hours_total = get_mountly_hours_from_calendar_name(login)
 
     if working_hours_total:
+        w_hours = count_worked_hours(login, month, year)
         working_days_total = "--"
 
     else:
+        working_hours_total = get_total_hours_from_calendar_name(login)
+        # En este if haría falta un walrus
+        if working_hours_total:
+            # En lugar de horario, lo que tiene es un número de horas totales
+            working_days_total = "--"
+            w_hours = count_worked_hours_on_life(login, month, year)
+
+    if not working_hours_total:
+        w_hours = count_worked_hours(login, month, year)
         dict_labor_hours_this_month = labor_hours_by_month_day(login, month, year)
 
         working_hours_total = 0
@@ -767,7 +785,7 @@ def bulk(login, mails, function, *argus):
     for user in mails:
         new_login_data = dict(login)
         new_login_data['user_email'] = user
-        if count_worked_hours(new_login_data, argus[-2], argus[-1]):
+        if count_worked_hours(new_login_data, argus[-2], argus[-1]) or count_worked_hours_on_life(new_login_data, argus[-2], argus[-1]):
             print('Procesando', user)
             function(new_login_data, *argus)
         else:
@@ -819,6 +837,32 @@ def get_mountly_hours_from_calendar_name(login):
         calendar_name = calendar[0]['calendar_id'][-1]
         cachos = calendar_name.split()
         if len(cachos) > 1 and (cachos[1].lower() == "mensual" or cachos[1].lower() == "mensuales"):
+            try:
+                hours = float(cachos[0])
+            except ValueError:
+                pass
+    return hours
+
+
+def get_total_hours_from_calendar_name(login):
+    """
+    Retorna las horas totales, si el nombre delo horario las menciona
+    """
+    user_id = get_user_id(login)
+    hours = None
+    calendar = login['conn'].execute_kw(login['db'],
+                                        login['uid'],
+                                        login['password'],
+                                        'hr.employee',
+                                        'search_read',
+                                        [[('id', '=',
+                                           user_id)]],
+                                        {'fields': ['calendar_id']})
+
+    if calendar[0]['calendar_id']:
+        calendar_name = calendar[0]['calendar_id'][-1]
+        cachos = calendar_name.split()
+        if len(cachos) > 1 and (cachos[1].lower() == "total" or cachos[1].lower() == "totales"):
             try:
                 hours = float(cachos[0])
             except ValueError:
@@ -905,6 +949,48 @@ def labor_hours_by_month_day(login, month=None, year=None):
         if weekday == 7:
             weekday = 0
     return labor_hours_by_day
+
+
+def count_worked_hours_on_life(login, month=None, year=None):
+    total = 0
+    if month == int(datetime.now().month) and year == int(datetime.now().year):
+        total = open_session_worked_hours(login)
+    for e in get_user_attendance_on_life(login, month, year):
+        total += e[2]
+
+    return total
+
+
+@memoize
+def get_user_attendance_on_life(login, month=None, year=None):
+    user_id = get_user_id(login)
+    if year is None:
+        year = int(datetime.now().year)
+    if month is None:
+        month = int(datetime.now().month)
+    month += 1
+    if month == 13:
+        month = 1
+        year += 1
+    date_filter = "{}-{:02d}-01 00:00:00".format(year, month)
+
+    try:
+        attendance = login['conn'].execute_kw(
+            login['db'],
+            login['uid'],
+            login['password'],
+            'hr.attendance',
+            'search_read',
+            [[('employee_id', '=', user_id),
+              ('check_in', '<', date_filter)
+              ]],
+            {'fields': ['employee_id', 'check_in', 'check_out',
+                        'worked_hours']})
+    except TypeError:
+        return None
+    else:
+        for e in attendance:
+            yield e['check_in'], e['check_out'], e['worked_hours']
 
 
 ########################################################################
