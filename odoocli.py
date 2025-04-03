@@ -628,7 +628,7 @@ def get_user_id(login):
                                      [],
                                      {'fields': ['user_id', 'id']})
     for user in users:
-        if user['user_id'][0] == user_to_find:
+        if user['user_id'] and user['user_id'][0] == user_to_find:
             return user['id']
 
 
